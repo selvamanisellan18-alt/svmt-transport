@@ -540,6 +540,7 @@ button, input, select, textarea {
 .login-btn {
   width: 100%;
   margin-top: 1rem;
+  justify-content: center;
 }
 
 .login-error {

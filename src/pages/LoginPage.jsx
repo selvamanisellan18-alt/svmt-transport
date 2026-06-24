@@ -24,7 +24,6 @@ export default function LoginPage({ onLoginSuccess }) {
             <Truck className="logo-icon" />
             <span>SVAT</span>
           </div>
-          <p className="login-title">Client Portal Login</p>
         </div>
 
         {error && <div className="login-error">{error}</div>}
