@@ -151,10 +151,8 @@ const DEFAULT_INVOICE = {
   bankBranch: 'TIRUPPUR MAIN & BARB0COTTON',
   bankHolderName: 'SREE VAARAHI AMMAN TRANSPORTS',
   signatoryName: 'P. SARANYA',
-  cgstRate: '',
-  sgstRate: '',
-  igstRate: '',
   roundOff: '',
+  gstCategory: 'exempted',
   wordsOverride: ''
 };
 
@@ -216,15 +214,28 @@ export default function Dashboard({ onLogout }) {
     
     setSubtotal(calculatedSubtotal);
 
-    const cgstRate = parseFloat(formData.cgstRate) || 0;
-    const sgstRate = parseFloat(formData.sgstRate) || 0;
-    const igstRate = parseFloat(formData.igstRate) || 0;
+    let cgstRate = 0;
+    let sgstRate = 0;
+    let igstRate = 0;
     const roundOff = parseFloat(formData.roundOff) || 0;
+
+    if (formData.gstCategory === 'rcm' || formData.gstCategory === 'forward_5') {
+      cgstRate = 2.5;
+      sgstRate = 2.5;
+    } else if (formData.gstCategory === 'forward_18') {
+      cgstRate = 9;
+      sgstRate = 9;
+    }
 
     const cgst = (calculatedSubtotal * cgstRate) / 100;
     const sgst = (calculatedSubtotal * sgstRate) / 100;
     const igst = (calculatedSubtotal * igstRate) / 100;
-    const grandTotal = calculatedSubtotal + cgst + sgst + igst + roundOff;
+    
+    // For RCM or Exempted, the GST amounts are shown on invoice but NOT added to payable Grand Total.
+    const isRcmOrExempt = formData.gstCategory === 'rcm' || formData.gstCategory === 'exempted';
+    const grandTotal = isRcmOrExempt 
+      ? calculatedSubtotal + roundOff 
+      : calculatedSubtotal + cgst + sgst + igst + roundOff;
 
     setCgstAmount(cgst);
     setSgstAmount(sgst);
@@ -236,7 +247,7 @@ export default function Dashboard({ onLogout }) {
     } else {
       setAmountInWords(formData.wordsOverride);
     }
-  }, [formData.items, formData.wordsOverride, formData.cgstRate, formData.sgstRate, formData.igstRate, formData.roundOff]);
+  }, [formData.items, formData.wordsOverride, formData.roundOff, formData.gstCategory]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -268,10 +279,8 @@ export default function Dashboard({ onLogout }) {
       items: [
         { particulars: '', quantity: '', rate: '', per: '', amount: '' }
       ],
-      cgstRate: '',
-      sgstRate: '',
-      igstRate: '',
       roundOff: '',
+      gstCategory: 'exempted',
       wordsOverride: ''
     }));
   };
@@ -377,21 +386,17 @@ export default function Dashboard({ onLogout }) {
       items: [
         { particulars: 'VEHICLE HIRING CHARGES', quantity: '', rate: '', per: '', amount: historyItem.amount }
       ],
-      cgstRate: '',
-      sgstRate: '',
-      igstRate: '',
       roundOff: '',
+      gstCategory: 'exempted',
       wordsOverride: ''
     }));
     setActiveTab('creator');
   };
 
-  // Determine Title based on GST tax rate
-  const cgstRateVal = parseFloat(formData.cgstRate) || 0;
-  const sgstRateVal = parseFloat(formData.sgstRate) || 0;
-  const igstRateVal = parseFloat(formData.igstRate) || 0;
-  const hasTax = cgstRateVal > 0 || sgstRateVal > 0 || igstRateVal > 0;
-  const billTitle = hasTax ? "Tax Invoice" : "Bill Of Supply";
+  // Determine Title based on GST tax category
+  const billTitle = formData.gstCategory !== 'exempted' ? "Tax Invoice" : "Bill Of Supply";
+  const displayCgstRate = (formData.gstCategory === 'rcm' || formData.gstCategory === 'forward_5') ? 2.5 : (formData.gstCategory === 'forward_18' ? 9 : 0);
+  const displaySgstRate = (formData.gstCategory === 'rcm' || formData.gstCategory === 'forward_5') ? 2.5 : (formData.gstCategory === 'forward_18' ? 9 : 0);
 
   return (
     <div className="dashboard-layout">
@@ -681,40 +686,20 @@ export default function Dashboard({ onLogout }) {
                 </div>
 
                 {/* Tax Setup */}
-                <h4 className="form-section-title">GST & Round Off settings (Manual Rates)</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                <h4 className="form-section-title">GST & Round Off settings</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div className="form-group">
-                    <label className="form-label">CGST Rate (%)</label>
-                    <input 
-                      type="number"
-                      step="any"
-                      className="form-input" 
-                      placeholder="e.g. 9"
-                      value={formData.cgstRate}
-                      onChange={(e) => handleInputChange('cgstRate', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">SGST Rate (%)</label>
-                    <input 
-                      type="number"
-                      step="any"
-                      className="form-input" 
-                      placeholder="e.g. 9"
-                      value={formData.sgstRate}
-                      onChange={(e) => handleInputChange('sgstRate', e.target.value)}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">IGST Rate (%)</label>
-                    <input 
-                      type="number"
-                      step="any"
-                      className="form-input" 
-                      placeholder="e.g. 18"
-                      value={formData.igstRate}
-                      onChange={(e) => handleInputChange('igstRate', e.target.value)}
-                    />
+                    <label className="form-label">GST Tax Category</label>
+                    <select 
+                      className="form-input"
+                      value={formData.gstCategory || 'exempted'}
+                      onChange={(e) => handleInputChange('gstCategory', e.target.value)}
+                    >
+                      <option value="exempted">Exempted</option>
+                      <option value="rcm">GST charge applicable for RCM (5% total - CGST 2.5% + SGST 2.5%)</option>
+                      <option value="forward_5">Forward Charge 5% (CGST 2.5% + SGST 2.5%)</option>
+                      <option value="forward_18">Forward Charge 18% (CGST 9% + SGST 9%)</option>
+                    </select>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Round Off (+/-)</label>
@@ -1177,7 +1162,7 @@ export default function Dashboard({ onLogout }) {
                         <tr style={{ fontWeight: 'bold' }}>
                           <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
                           <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
-                            CGST ( {formData.cgstRate ? `${formData.cgstRate} %` : '        %'} )
+                            CGST ( {displayCgstRate ? `${displayCgstRate} %` : '        %'} )
                           </td>
                           <td style={{ textAlign: 'right', padding: '4px' }}>{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         </tr>
@@ -1186,7 +1171,7 @@ export default function Dashboard({ onLogout }) {
                         <tr style={{ fontWeight: 'bold' }}>
                           <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
                           <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
-                            SGST ( {formData.sgstRate ? `${formData.sgstRate} %` : '        %'} )
+                            SGST ( {displaySgstRate ? `${displaySgstRate} %` : '        %'} )
                           </td>
                           <td style={{ textAlign: 'right', padding: '4px' }}>{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         </tr>
@@ -1195,7 +1180,7 @@ export default function Dashboard({ onLogout }) {
                         <tr style={{ fontWeight: 'bold' }}>
                           <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
                           <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
-                            IGST ( {formData.igstRate !== '' ? `${formData.igstRate} %` : '    0  %'} )
+                            IGST ( 0 % )
                           </td>
                           <td style={{ textAlign: 'right', padding: '4px' }}>{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         </tr>
@@ -1221,6 +1206,24 @@ export default function Dashboard({ onLogout }) {
                         </tr>
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* GST RCM Status Bar */}
+                  <div style={{ 
+                    border: '1.5px solid #000000', 
+                    borderTop: 'none',
+                    padding: '5px 8px',
+                    fontSize: '0.72rem',
+                    fontWeight: '800',
+                    textAlign: 'left',
+                    backgroundColor: '#FFFFFF',
+                    lineHeight: 1.3
+                  }}>
+                    <span>Whether GST is payable on Reverse Charge basis (RCM): <strong>{
+                      formData.gstCategory === 'rcm' 
+                        ? 'GST charge applicable for RCM' 
+                        : (formData.gstCategory === 'exempted' ? 'Exempted' : 'No')
+                    }</strong></span>
                   </div>
 
                   {/* Bottom Section: Words block on left, Bank + Signatory on right */}
