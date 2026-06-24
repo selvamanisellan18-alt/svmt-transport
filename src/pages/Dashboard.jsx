@@ -494,19 +494,8 @@ export default function Dashboard({ onLogout }) {
         {/* Invoice Creator Tab */}
         {activeTab === 'creator' && (
           <div>
-            <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="dashboard-header">
               <h2 className="dashboard-title">Create / Edit Invoice</h2>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#EF4444', borderColor: '#EF4444' }} onClick={handleClearForm}>
-                  <Trash2 size={18} /> Clear Form
-                </button>
-                <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={handleSaveInvoice}>
-                  <Save size={18} /> Save Invoice
-                </button>
-                <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={handleDownloadPDF}>
-                  <Printer size={18} /> Download PDF
-                </button>
-              </div>
             </div>
 
             <div className="invoice-workspace" style={{ display: 'block', maxWidth: '850px', margin: '0 auto' }}>
