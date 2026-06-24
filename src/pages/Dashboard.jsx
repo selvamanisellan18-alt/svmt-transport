@@ -10,7 +10,7 @@ const SVATLogo = () => (
     justifyContent: 'center', 
     border: '1.5px solid #000000', 
     borderRadius: '6px', 
-    padding: '4px', 
+    padding: '2px', 
     width: '84px', 
     height: '84px', 
     backgroundColor: '#FFFFFF', 
@@ -24,30 +24,59 @@ const SVATLogo = () => (
       right: '4px',
       fontSize: '0.5rem',
       fontWeight: '900',
-      color: '#EF4444'
+      color: '#E53935'
     }}>TM</span>
 
-    <svg width="46" height="46" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Outer red crescent */}
-      <path d="M 50 8 C 24 8, 6 28, 6 50 C 6 72, 24 92, 50 92 C 66 92, 80 84, 88 72" stroke="#EF4444" strokeWidth="6" strokeLinecap="round" fill="none" />
-      {/* Inner grey dotted crescent */}
-      <path d="M 55 14 C 38 14, 22 28, 22 50 C 22 68, 36 84, 55 84 C 70 84, 82 72, 85 58" stroke="#64748B" strokeWidth="3" strokeLinecap="round" fill="none" strokeDasharray="4 2" />
+    <svg width="78" height="78" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Grey Crescent (Top-Right) */}
+      <path d="M 77 66 C 92 50, 91 20, 69 8 C 47 -4, 23 2, 16 24 C 26 11, 49 7, 66 17 C 83 27, 82 51, 71 67 C 73 67, 75 66, 77 66 Z" fill="#5A5A5A" />
       
-      {/* Red Truck outline inside */}
-      <g transform="translate(18, 26) scale(1.1)">
-        {/* Truck Cabin */}
-        <path d="M 32 10 L 42 10 L 48 18 L 48 28 L 32 28 Z" fill="none" stroke="#EF4444" strokeWidth="3" strokeLinejoin="round" />
-        {/* Truck Container */}
-        <rect x="2" y="5" width="28" height="23" rx="2" fill="none" stroke="#EF4444" strokeWidth="3" />
-        {/* Wheels */}
-        <circle cx="9" cy="30" r="3.5" fill="#EF4444" />
-        <circle cx="39" cy="30" r="3.5" fill="#EF4444" />
-        {/* Arrow inside container */}
-        <path d="M 6 16 L 22 16 M 16 11 L 22 16 L 16 21" stroke="#EF4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Red Crescent (Bottom-Left) */}
+      <path d="M 23 24 C 8 40, 9 70, 31 82 C 53 94, 77 88, 84 66 C 74 79, 51 83, 34 73 C 17 63, 18 39, 29 23 C 27 23, 25 24, 23 24 Z" fill="#E53935" />
+
+      {/* Truck Group */}
+      <g>
+        {/* Chassis / Road line */}
+        <line x1="28" y1="46" x2="68" y2="46" stroke="#E53935" strokeWidth="2.2" strokeLinecap="round" />
+        
+        {/* Container Box */}
+        <rect x="32" y="27" width="22" height="17" fill="#FFFFFF" stroke="#E53935" strokeWidth="2.2" strokeLinejoin="round" />
+        
+        {/* Cabin Outline */}
+        <path d="M 54 33 H 61 L 67 39 V 46 H 54 Z" fill="#FFFFFF" stroke="#E53935" strokeWidth="2.2" strokeLinejoin="round" />
+        
+        {/* Cabin Window */}
+        <path d="M 57 36 H 60 L 63 39 V 42 H 57 Z" fill="#FFFFFF" stroke="#E53935" strokeWidth="1.2" strokeLinejoin="round" />
+        
+        {/* Left Wheel */}
+        <circle cx="41" cy="46" r="3.5" fill="#FFFFFF" stroke="#E53935" strokeWidth="1.8" />
+        
+        {/* Right Wheel */}
+        <circle cx="59" cy="46" r="3.5" fill="#FFFFFF" stroke="#E53935" strokeWidth="1.8" />
+        
+        {/* Letter L */}
+        <text x="33.5" y="52" fontFamily="sans-serif" fontWeight="900" fontSize="5.5" fill="#E53935">L</text>
+        
+        {/* Letter O */}
+        <text x="49" y="52" fontFamily="sans-serif" fontWeight="900" fontSize="5.5" fill="#E53935">O</text>
+        
+        {/* Inside Container - Speed Lines */}
+        <line x1="36" y1="31" x2="43" y2="31" stroke="#E53935" strokeWidth="1.5" strokeLinecap="round" />
+        
+        {/* Inside Container - Middle Line with Arrow */}
+        <line x1="34" y1="35.5" x2="48" y2="35.5" stroke="#E53935" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M 45 33 L 48 35.5 L 45 38" fill="none" stroke="#E53935" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        
+        {/* Inside Container - Bottom Line */}
+        <line x1="36" y1="40" x2="42" y2="40" stroke="#E53935" strokeWidth="1.5" strokeLinecap="round" />
       </g>
+
+      {/* SVAT stylized text */}
+      <text x="50" y="65" textAnchor="middle" fontFamily="'Arial Black', sans-serif" fontWeight="900" fontSize="13" fill="#0F6236">SVAT</text>
+      
+      {/* CONTAINER SUPPLYING AGENCY subtext */}
+      <text x="50" y="70" textAnchor="middle" fontFamily="sans-serif" fontWeight="800" fontSize="3.1" fill="#000000" letterSpacing="0.1">CONTAINER SUPPLYING AGENCY</text>
     </svg>
-    <div style={{ color: '#047857', fontWeight: '900', fontSize: '0.85rem', letterSpacing: '0.3px', marginTop: '1px', lineHeight: 1 }}>SVAT</div>
-    <div style={{ color: '#475569', fontSize: '0.28rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1px', marginTop: '1px', textAlign: 'center', lineHeight: 1 }}>Container Supplier</div>
   </div>
 );
 
