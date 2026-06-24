@@ -33,7 +33,8 @@ const SVATLogo = () => (
       style={{ 
         width: '95px', 
         height: '95px', 
-        objectFit: 'contain' 
+        objectFit: 'contain',
+        filter: 'brightness(1.2) contrast(1.1) saturate(1.15)'
       }} 
     />
   </div>
@@ -150,8 +151,10 @@ const DEFAULT_INVOICE = {
   bankBranch: 'TIRUPPUR MAIN & BARB0COTTON',
   bankHolderName: 'SREE VAARAHI AMMAN TRANSPORTS',
   signatoryName: 'P. SARANYA',
-  gstRate: '0',
-  gstType: 'CGST_SGST',
+  cgstRate: '',
+  sgstRate: '',
+  igstRate: '',
+  roundOff: '',
   wordsOverride: ''
 };
 
@@ -213,22 +216,15 @@ export default function Dashboard({ onLogout }) {
     
     setSubtotal(calculatedSubtotal);
 
-    const rate = parseFloat(formData.gstRate) || 0;
-    let cgst = 0;
-    let sgst = 0;
-    let igst = 0;
-    let grandTotal = calculatedSubtotal;
+    const cgstRate = parseFloat(formData.cgstRate) || 0;
+    const sgstRate = parseFloat(formData.sgstRate) || 0;
+    const igstRate = parseFloat(formData.igstRate) || 0;
+    const roundOff = parseFloat(formData.roundOff) || 0;
 
-    if (rate > 0) {
-      if (formData.gstType === 'CGST_SGST') {
-        cgst = calculatedSubtotal * (rate / 2) / 100;
-        sgst = calculatedSubtotal * (rate / 2) / 100;
-        grandTotal = calculatedSubtotal + cgst + sgst;
-      } else {
-        igst = calculatedSubtotal * rate / 100;
-        grandTotal = calculatedSubtotal + igst;
-      }
-    }
+    const cgst = (calculatedSubtotal * cgstRate) / 100;
+    const sgst = (calculatedSubtotal * sgstRate) / 100;
+    const igst = (calculatedSubtotal * igstRate) / 100;
+    const grandTotal = calculatedSubtotal + cgst + sgst + igst + roundOff;
 
     setCgstAmount(cgst);
     setSgstAmount(sgst);
@@ -240,7 +236,7 @@ export default function Dashboard({ onLogout }) {
     } else {
       setAmountInWords(formData.wordsOverride);
     }
-  }, [formData.items, formData.wordsOverride, formData.gstRate, formData.gstType]);
+  }, [formData.items, formData.wordsOverride, formData.cgstRate, formData.sgstRate, formData.igstRate, formData.roundOff]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -272,8 +268,10 @@ export default function Dashboard({ onLogout }) {
       items: [
         { particulars: '', quantity: '', rate: '', per: '', amount: '' }
       ],
-      gstRate: '0',
-      gstType: 'CGST_SGST',
+      cgstRate: '',
+      sgstRate: '',
+      igstRate: '',
+      roundOff: '',
       wordsOverride: ''
     }));
   };
@@ -378,13 +376,22 @@ export default function Dashboard({ onLogout }) {
       date: historyItem.date,
       items: [
         { particulars: 'VEHICLE HIRING CHARGES', quantity: '', rate: '', per: '', amount: historyItem.amount }
-      ]
+      ],
+      cgstRate: '',
+      sgstRate: '',
+      igstRate: '',
+      roundOff: '',
+      wordsOverride: ''
     }));
     setActiveTab('creator');
   };
 
   // Determine Title based on GST tax rate
-  const billTitle = (parseFloat(formData.gstRate) || 0) > 0 ? "Tax Invoice" : "Bill Of Supply";
+  const cgstRateVal = parseFloat(formData.cgstRate) || 0;
+  const sgstRateVal = parseFloat(formData.sgstRate) || 0;
+  const igstRateVal = parseFloat(formData.igstRate) || 0;
+  const hasTax = cgstRateVal > 0 || sgstRateVal > 0 || igstRateVal > 0;
+  const billTitle = hasTax ? "Tax Invoice" : "Bill Of Supply";
 
   return (
     <div className="dashboard-layout">
@@ -674,32 +681,51 @@ export default function Dashboard({ onLogout }) {
                 </div>
 
                 {/* Tax Setup */}
-                <h4 className="form-section-title">GST Tax Calculation settings</h4>
-                <div className="form-grid-2">
+                <h4 className="form-section-title">GST & Round Off settings (Manual Rates)</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div className="form-group">
-                    <label className="form-label">GST Tax Rate</label>
-                    <select 
-                      className="form-input"
-                      value={formData.gstRate}
-                      onChange={(e) => handleInputChange('gstRate', e.target.value)}
-                    >
-                      <option value="0">0% (Exempt - Bill of Supply)</option>
-                      <option value="5">5% (GTA RCM / Forward)</option>
-                      <option value="12">12% (Forward Charge)</option>
-                      <option value="18">18% (Standard Service)</option>
-                    </select>
+                    <label className="form-label">CGST Rate (%)</label>
+                    <input 
+                      type="number"
+                      step="any"
+                      className="form-input" 
+                      placeholder="e.g. 9"
+                      value={formData.cgstRate}
+                      onChange={(e) => handleInputChange('cgstRate', e.target.value)}
+                    />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Tax Type</label>
-                    <select 
-                      className="form-input"
-                      disabled={formData.gstRate === '0'}
-                      value={formData.gstType}
-                      onChange={(e) => handleInputChange('gstType', e.target.value)}
-                    >
-                      <option value="CGST_SGST">CGST & SGST (Local State)</option>
-                      <option value="IGST">IGST (Inter-state)</option>
-                    </select>
+                    <label className="form-label">SGST Rate (%)</label>
+                    <input 
+                      type="number"
+                      step="any"
+                      className="form-input" 
+                      placeholder="e.g. 9"
+                      value={formData.sgstRate}
+                      onChange={(e) => handleInputChange('sgstRate', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">IGST Rate (%)</label>
+                    <input 
+                      type="number"
+                      step="any"
+                      className="form-input" 
+                      placeholder="e.g. 18"
+                      value={formData.igstRate}
+                      onChange={(e) => handleInputChange('igstRate', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Round Off (+/-)</label>
+                    <input 
+                      type="number"
+                      step="any"
+                      className="form-input" 
+                      placeholder="e.g. -0.50"
+                      value={formData.roundOff}
+                      onChange={(e) => handleInputChange('roundOff', e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -999,7 +1025,6 @@ export default function Dashboard({ onLogout }) {
                           <div style={{ paddingLeft: '10px', textAlign: 'left' }}>
                             <div style={{ fontSize: '1.18rem', fontWeight: '800', color: '#0F6236', lineHeight: 1.1 }}>
                               {formData.companyName}
-                              <sup style={{ color: '#A82C2C', fontSize: '0.65rem', marginLeft: '2px', verticalAlign: 'super' }}>TM</sup>
                             </div>
                             <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#A82C2C', textTransform: 'uppercase', marginTop: '3px', letterSpacing: '0.5px' }}>Export cargo movers</div>
                             <div style={{ fontSize: '0.68rem', marginTop: '3px', color: '#000000', lineHeight: 1.3 }}>
@@ -1141,42 +1166,54 @@ export default function Dashboard({ onLogout }) {
                           </tr>
                         ))}
 
-                        {/* GST breakdown lines if rate > 0 */}
-                        {parseFloat(formData.gstRate) > 0 && (
-                          <>
-                            <tr style={{ borderTop: '1.5px solid #000000', fontWeight: 'bold' }}>
-                              <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
-                              <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>Sub Total</td>
-                              <td style={{ textAlign: 'right', padding: '4px' }}>{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                            </tr>
-                            {formData.gstType === 'CGST_SGST' ? (
-                              <>
-                                <tr style={{ fontWeight: 'bold' }}>
-                                  <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
-                                  <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>CGST @ {(parseFloat(formData.gstRate) / 2)}%</td>
-                                  <td style={{ textAlign: 'right', padding: '4px' }}>{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                </tr>
-                                <tr style={{ fontWeight: 'bold' }}>
-                                  <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
-                                  <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>SGST @ {(parseFloat(formData.gstRate) / 2)}%</td>
-                                  <td style={{ textAlign: 'right', padding: '4px' }}>{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                </tr>
-                              </>
-                            ) : (
-                              <tr style={{ fontWeight: 'bold' }}>
-                                <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
-                                <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>IGST @ {formData.gstRate}%</td>
-                                <td style={{ textAlign: 'right', padding: '4px' }}>{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                              </tr>
-                            )}
-                          </>
-                        )}
+                        {/* Sub Total row (Always shown) */}
+                        <tr style={{ borderTop: '1.5px solid #000000', fontWeight: 'bold' }}>
+                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>Sub Total</td>
+                          <td style={{ textAlign: 'right', padding: '4px' }}>{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        </tr>
+
+                        {/* CGST row */}
+                        <tr style={{ fontWeight: 'bold' }}>
+                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
+                            CGST ( {formData.cgstRate ? `${formData.cgstRate} %` : '        %'} )
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '4px' }}>{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        </tr>
+
+                        {/* SGST row */}
+                        <tr style={{ fontWeight: 'bold' }}>
+                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
+                            SGST ( {formData.sgstRate ? `${formData.sgstRate} %` : '        %'} )
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '4px' }}>{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        </tr>
+
+                        {/* IGST row */}
+                        <tr style={{ fontWeight: 'bold' }}>
+                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
+                            IGST ( {formData.igstRate !== '' ? `${formData.igstRate} %` : '    0  %'} )
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '4px' }}>{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        </tr>
+
+                        {/* Round Off row */}
+                        <tr style={{ fontWeight: 'bold' }}>
+                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
+                            Round Off (+/-)
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '4px' }}>{(parseFloat(formData.roundOff) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        </tr>
                         
-                        {/* Sum Row */}
-                        <tr style={{ borderTop: '1.5px solid #000000', fontWeight: '800', backgroundColor: '#F8FAFC' }}>
+                        {/* Grand Total Row */}
+                        <tr style={{ borderTop: '1.5px solid #000000', fontWeight: '800', backgroundColor: '#E2E8F0' }}>
                           <td style={{ borderRight: '1.5px solid #000000', padding: '5px' }}></td>
-                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '5px' }}>
-                            {parseFloat(formData.gstRate) > 0 ? "Grand Total" : "Total"}
+                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '5px', fontWeight: '800' }}>
+                            Grand Total
                           </td>
                           <td style={{ textAlign: 'right', padding: '5px', fontWeight: '800' }}>
                             ₹ {totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
