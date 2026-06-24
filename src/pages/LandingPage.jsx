@@ -46,25 +46,17 @@ export default function LandingPage({ onNavigate }) {
         </div>
 
         {/* Trucks Banner Box */}
-        <div style={{
-          maxWidth: '850px',
-          margin: '4rem auto -12rem',
-          backgroundColor: '#FFFFFF',
-          padding: '1rem',
-          borderRadius: '12px',
-          border: '1.5px solid var(--border-color)',
-          boxShadow: 'var(--shadow-premium)'
-        }}>
+        <div className="hero-banner-container">
           <img 
             src="/trucks.png" 
             alt="SVAT Fleet" 
-            style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '8px' }} 
+            className="hero-banner-img" 
           />
         </div>
       </section>
 
       {/* Spacing for overlapping hero content */}
-      <div style={{ height: '12rem' }}></div>
+      <div className="hero-spacer"></div>
 
       {/* Shipment Tracking Widget */}
       <section id="track-widget" className="tracking-container">
@@ -96,8 +88,10 @@ export default function LandingPage({ onNavigate }) {
             {trackingResult.steps.map((step, idx) => (
               <div key={idx} className={`timeline-step ${step.active ? 'active' : ''}`}>
                 <div className="step-node"></div>
-                <div className="step-title">{step.title}</div>
-                <div className="step-desc">{step.desc}</div>
+                <div className="step-text-container">
+                  <div className="step-title">{step.title}</div>
+                  <div className="step-desc">{step.desc}</div>
+                </div>
               </div>
             ))}
           </div>

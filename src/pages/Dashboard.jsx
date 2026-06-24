@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, FileText, History, LogOut, Plus, Trash2, Printer, Save, DollarSign, Calendar, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, FileText, History, LogOut, Plus, Trash2, Printer, Save, DollarSign, Calendar, TrendingUp, Truck } from 'lucide-react';
 
 // Custom SVG Logo for SVAT matching the red crescent-shaped truck logo with TM trademark
 const SVATLogo = () => (
@@ -10,9 +10,9 @@ const SVATLogo = () => (
     justifyContent: 'center', 
     border: '1.5px solid #000000', 
     borderRadius: '6px', 
-    padding: '3px', 
-    width: '84px', 
-    height: '84px', 
+    padding: '4px', 
+    width: '105px', 
+    height: '105px', 
     backgroundColor: '#FFFFFF', 
     flexShrink: 0,
     position: 'relative'
@@ -20,9 +20,9 @@ const SVATLogo = () => (
     {/* Small TM mark in the top-right of the logo box */}
     <span style={{
       position: 'absolute',
-      top: '2px',
-      right: '4px',
-      fontSize: '0.5rem',
+      top: '3px',
+      right: '6px',
+      fontSize: '0.55rem',
       fontWeight: '900',
       color: '#E53935'
     }}>TM</span>
@@ -31,8 +31,8 @@ const SVATLogo = () => (
       src="/logo.png" 
       alt="SVAT Logo" 
       style={{ 
-        width: '74px', 
-        height: '74px', 
+        width: '95px', 
+        height: '95px', 
         objectFit: 'contain' 
       }} 
     />
@@ -197,14 +197,17 @@ export default function Dashboard({ onLogout }) {
   });
   const [activeRowIdx, setActiveRowIdx] = useState(null);
 
-  // Re-calculate totals, GST, and words dynamically
+  // Re-calculate totals, GST, and words dynamically (sanitizing commas/symbols)
   useEffect(() => {
     const calculatedSubtotal = formData.items.reduce((acc, item) => {
-      if (item.amount !== undefined && item.amount !== '') {
-        return acc + (parseFloat(item.amount) || 0);
+      const cleanAmtStr = (item.amount || '').toString().replace(/[^0-9.]/g, '');
+      if (cleanAmtStr !== '') {
+        return acc + (parseFloat(cleanAmtStr) || 0);
       }
-      const q = parseFloat(item.quantity) || 0;
-      const r = parseFloat(item.rate) || 0;
+      const cleanQtyStr = (item.quantity || '').toString().replace(/[^0-9.]/g, '');
+      const cleanRateStr = (item.rate || '').toString().replace(/[^0-9.]/g, '');
+      const q = parseFloat(cleanQtyStr) || 0;
+      const r = parseFloat(cleanRateStr) || 0;
       return acc + (q * r);
     }, 0);
     
@@ -281,6 +284,20 @@ export default function Dashboard({ onLogout }) {
       ...newItems[index],
       [field]: value
     };
+    
+    // Automatically calculate amount in form row when Qty or Rate changes
+    if (field === 'quantity' || field === 'rate') {
+      const qStr = field === 'quantity' ? value : newItems[index].quantity;
+      const rStr = field === 'rate' ? value : newItems[index].rate;
+      const qClean = (qStr || '').toString().replace(/[^0-9.]/g, '');
+      const rClean = (rStr || '').toString().replace(/[^0-9.]/g, '');
+      const q = parseFloat(qClean) || 0;
+      const r = parseFloat(rClean) || 0;
+      if (q > 0 && r > 0) {
+        newItems[index].amount = (q * r).toString();
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       items: newItems
@@ -371,6 +388,18 @@ export default function Dashboard({ onLogout }) {
 
   return (
     <div className="dashboard-layout">
+      {/* Mobile Top Header */}
+      <div className="mobile-dashboard-header">
+        <div className="logo-container" style={{ fontSize: '1.2rem' }}>
+          <Truck className="logo-icon" style={{ width: '24px', height: '24px' }} />
+          <span className="logo-text">SVAT</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>munik</span>
+          <div className="user-avatar-mobile">M</div>
+        </div>
+      </div>
+
       {/* Sidebar Panel */}
       <aside className="sidebar">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -467,7 +496,7 @@ export default function Dashboard({ onLogout }) {
 
             <div style={{ textAlign: 'left', backgroundColor: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
               <h3 style={{ marginBottom: '1.5rem', fontWeight: 700 }}>Quick Actions</h3>
-              <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className="quick-actions-row">
                 <button className="btn-primary" onClick={() => { handleClearForm(); setActiveTab('creator'); }}>
                   Create New Invoice
                 </button>
@@ -486,7 +515,7 @@ export default function Dashboard({ onLogout }) {
               <h2 className="dashboard-title">Create / Edit Invoice</h2>
             </div>
 
-            <div className="invoice-workspace" style={{ display: 'block', maxWidth: '850px', margin: '0 auto' }}>
+            <div className="invoice-workspace">
               {/* Creator Form */}
               <div className="invoice-form-container">
                 
@@ -914,7 +943,7 @@ export default function Dashboard({ onLogout }) {
                 </div>
 
                 {/* Bottom Actions Row inside Form */}
-                <div style={{ marginTop: '2.5rem', display: 'flex', gap: '1.25rem', borderTop: '1.5px solid var(--border-color)', paddingTop: '2rem' }}>
+                <div className="form-actions-row">
                   <button className="btn-outline" style={{ flex: 1, padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', color: '#EF4444', borderColor: '#EF4444' }} onClick={handleClearForm}>
                     <Trash2 size={20} /> Clear Form
                   </button>
@@ -925,165 +954,180 @@ export default function Dashboard({ onLogout }) {
                     <Printer size={20} /> Download PDF
                   </button>
                 </div>
-              </div>
+              </div> {/* End of invoice-form-container */}
 
-              {/* OFF-SCREEN PDF PREVIEW FOR GENERATION (Invisible on page, but fully rendered for html2pdf) */}
-              <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '794px', overflow: 'hidden' }}>
-                <div className="invoice-preview-container" style={{ position: 'static', maxHeight: 'none', overflow: 'visible', paddingRight: 0 }}>
+              {/* LIVE PREVIEW COLUMN (Visible on screen, responsive and scrolls on mobile) */}
+              <div className="invoice-preview-container">
+                <div className="preview-scroll-wrapper" style={{ overflowX: 'auto', width: '100%' }}>
                   {/* Printable Invoice Page (Restructured Grid matching the first image layout exactly) */}
                   <div className="invoice-preview-card" style={{ padding: '2rem', backgroundColor: '#FFFFFF', color: '#000000', width: '794px', boxSizing: 'border-box' }}>
-                  <div className="bill-header" style={{
-                    border: '1.5px solid #000000',
-                    borderBottom: 'none',
-                    textAlign: 'center',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    fontSize: '1.1rem',
-                    padding: '0.4rem'
-                  }}>
-                    {billTitle}
-                  </div>
+                    <div className="bill-header" style={{
+                      border: '1.5px solid #000000',
+                      borderBottom: 'none',
+                      textAlign: 'center',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      fontSize: '1.1rem',
+                      padding: '0.4rem'
+                    }}>
+                      {billTitle}
+                    </div>
 
-                  {/* Top Metadata Grid: divided into Left Half (Seller, Buyer) & Right Half (Note dates, cargo specs) */}
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '1.1fr 1fr', 
-                    border: '1.5px solid #000000', 
-                    borderBottom: 'none'
-                  }}>
-                    {/* Left Column (Seller Info & Buyer Info) */}
-                    <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1.5px solid #000000' }}>
-                      {/* Seller block */}
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: '96px 1fr', 
-                        alignItems: 'center', 
-                        padding: '8px', 
-                        borderBottom: '1.5px solid #000000' 
-                      }}>
-                        <SVATLogo />
-                        <div style={{ paddingLeft: '8px', textAlign: 'left' }}>
-                          <div style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0F6236', lineHeight: 1.1 }}>
-                            {formData.companyName}
-                            <sup style={{ color: '#A82C2C', fontSize: '0.65rem', marginLeft: '2px', verticalAlign: 'super' }}>TM</sup>
+                    {/* Top Metadata Grid: divided into Left Half (Seller, Buyer) & Right Half (Note dates, cargo specs) */}
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: '1.1fr 1fr', 
+                      border: '1.5px solid #000000', 
+                      borderBottom: 'none'
+                    }}>
+                      {/* Left Column (Seller Info & Buyer Info) */}
+                      <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1.5px solid #000000' }}>
+                        {/* Seller block */}
+                        <div style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: '110px 1fr', 
+                          alignItems: 'center', 
+                          padding: '8px', 
+                          borderBottom: '1.5px solid #000000' 
+                        }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <SVATLogo />
+                            <div style={{ fontSize: '0.52rem', fontWeight: '900', color: '#000000', marginTop: '4px', textAlign: 'center', textTransform: 'uppercase', lineHeight: 1.1 }}>
+                              Container Supplying Agency
+                            </div>
                           </div>
-                          <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#A82C2C', textTransform: 'uppercase', marginTop: '2px', letterSpacing: '0.5px' }}>Export cargo movers</div>
-                          <div style={{ fontSize: '0.68rem', marginTop: '3px', color: '#000000', lineHeight: 1.3 }}>
-                            {formData.companyAddress}<br />
-                            <strong>GSTIN/UIN:</strong> {formData.companyGst} | <strong>State Name:</strong> {formData.companyState}<br />
-                            <strong>Website:</strong> {formData.companyWebsite} | <strong>E-Mail:</strong> {formData.companyEmail}<br />
-                            <strong style={{ display: 'block', marginTop: '2px', color: '#1E293B', fontSize: '0.62rem' }}>ISO 9001:2015 Certified transport company</strong>
+                          <div style={{ paddingLeft: '10px', textAlign: 'left' }}>
+                            <div style={{ fontSize: '1.18rem', fontWeight: '800', color: '#0F6236', lineHeight: 1.1 }}>
+                              {formData.companyName}
+                              <sup style={{ color: '#A82C2C', fontSize: '0.65rem', marginLeft: '2px', verticalAlign: 'super' }}>TM</sup>
+                            </div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: '800', color: '#A82C2C', textTransform: 'uppercase', marginTop: '3px', letterSpacing: '0.5px' }}>Export cargo movers</div>
+                            <div style={{ fontSize: '0.68rem', marginTop: '3px', color: '#000000', lineHeight: 1.3 }}>
+                              {formData.companyAddress}<br />
+                              <strong>GSTIN/UIN:</strong> {formData.companyGst} | <strong>State Name:</strong> {formData.companyState}<br />
+                              <strong>Website:</strong> {formData.companyWebsite} | <strong>E-Mail:</strong> {formData.companyEmail}<br />
+                              <strong style={{ display: 'block', marginTop: '2px', color: '#1E293B', fontSize: '0.62rem' }}>ISO 9001:2015 Certified transport company</strong>
+                            </div>
                           </div>
+                        </div>
+
+                        {/* Buyer block */}
+                        <div style={{ padding: '8px', textAlign: 'left', flexGrow: 1, fontSize: '0.7rem', lineHeight: 1.4 }}>
+                          <div style={{ fontWeight: '700', textTransform: 'uppercase', textDecoration: 'underline', marginBottom: '2px' }}>Buyer (Bill to)</div>
+                          {formData.consigneeName && <div style={{ fontWeight: '900', fontSize: '0.82rem', color: '#000000', marginBottom: '2px' }}>{formData.consigneeName}</div>}
+                          {formData.consigneeAddress && <div>{formData.consigneeAddress}</div>}
+                          {(formData.consigneeGst || formData.consigneeState) && (
+                            <div style={{ marginTop: '2px' }}>
+                              {formData.consigneeGst && <span><strong>GSTIN/UIN:</strong> {formData.consigneeGst}</span>}
+                              {formData.consigneeGst && formData.consigneeState ? ' | ' : ''}
+                              {formData.consigneeState && <span><strong>State Name:</strong> {formData.consigneeState}</span>}
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Buyer block */}
-                      <div style={{ padding: '8px', textAlign: 'left', flexGrow: 1, fontSize: '0.7rem', lineHeight: 1.4 }}>
-                        <div style={{ fontWeight: '700', textTransform: 'uppercase', textDecoration: 'underline', marginBottom: '2px' }}>Buyer (Bill to)</div>
-                        <div style={{ fontWeight: '900', fontSize: '0.78rem', color: '#000000' }}>{formData.consigneeName}</div>
-                        <div>
-                          {formData.consigneeAddress}<br />
-                          <strong>GSTIN/UIN:</strong> {formData.consigneeGst}<br />
-                          <strong>State Name:</strong> {formData.consigneeState}
+                      {/* Right Column (Document specifications) */}
+                      <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.7rem', textAlign: 'left' }}>
+                        {/* Row 1 */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', borderBottom: '1.5px solid #000000', minHeight: '38px' }}>
+                          <div style={{ borderRight: '1.5px solid #000000', padding: '4px' }}>
+                            <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Debit Note No.</span>
+                            <strong style={{ fontSize: '0.75rem' }}>{formData.debitNoteNo}</strong>
+                          </div>
+                          <div style={{ padding: '4px' }}>
+                            <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Dated</span>
+                            <strong style={{ fontSize: '0.75rem' }}>{formData.date}</strong>
+                          </div>
+                        </div>
+                        
+                        {/* Row 2 */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', borderBottom: '1.5px solid #000000', minHeight: '38px' }}>
+                          <div style={{ borderRight: '1.5px solid #000000', padding: '4px' }}>
+                            <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Original Invoice No. & Date.</span>
+                            <strong>{formData.originalInvoiceNo || ''} {formData.originalInvoiceDate ? `dt. ${formData.originalInvoiceDate}` : ''}</strong>
+                          </div>
+                          <div style={{ padding: '4px' }}>
+                            <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Other References</span>
+                            <strong>{formData.otherRefs || ''}</strong>
+                          </div>
+                        </div>
+
+                        {/* Row 3 */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', borderBottom: '1.5px solid #000000', minHeight: '38px' }}>
+                          <div style={{ borderRight: '1.5px solid #000000', padding: '4px' }}>
+                            <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Vessel/Flight No.</span>
+                            <strong style={{ fontSize: '0.75rem' }}>{formData.vesselFlightNo}</strong>
+                          </div>
+                          <div style={{ padding: '4px' }}>
+                            <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Place of receipt by shipper:</span>
+                            <strong>{formData.placeOfReceipt}</strong>
+                          </div>
+                        </div>
+
+                        {/* Row 4 */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', borderBottom: '1.5px solid #000000', minHeight: '38px' }}>
+                          <div style={{ borderRight: '1.5px solid #000000', padding: '4px' }}>
+                            <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>City/Port of Loading</span>
+                            <strong>{formData.portOfLoading}</strong>
+                          </div>
+                          <div style={{ padding: '4px' }}>
+                            <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>City/Port of Discharge</span>
+                            <strong>{formData.portOfDischarge}</strong>
+                          </div>
+                        </div>
+
+                        {/* Row 5 (Cargo dimensions) */}
+                        <div style={{ padding: '8px', lineHeight: 1.4, flexGrow: 1 }}>
+                          {formData.ctns && <span><strong>NO OF CTNS – </strong> {formData.ctns}<br /></span>}
+                          {formData.cbm && <span><strong>CBM – </strong> {formData.cbm}<br /></span>}
+                          {formData.weight && <span><strong>WEIGHT – </strong> {formData.weight}<br /></span>}
                         </div>
                       </div>
                     </div>
 
-                    {/* Right Column (Document specifications) */}
-                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.7rem', textAlign: 'left' }}>
-                      {/* Row 1 */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', borderBottom: '1.5px solid #000000', minHeight: '38px' }}>
-                        <div style={{ borderRight: '1.5px solid #000000', padding: '4px' }}>
-                          <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Debit Note No.</span>
-                          <strong style={{ fontSize: '0.75rem' }}>{formData.debitNoteNo}</strong>
-                        </div>
-                        <div style={{ padding: '4px' }}>
-                          <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Dated</span>
-                          <strong style={{ fontSize: '0.75rem' }}>{formData.date}</strong>
-                        </div>
-                      </div>
-                      
-                      {/* Row 2 */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', borderBottom: '1.5px solid #000000', minHeight: '38px' }}>
-                        <div style={{ borderRight: '1.5px solid #000000', padding: '4px' }}>
-                          <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Original Invoice No. & Date.</span>
-                          <strong>{formData.originalInvoiceNo || 'N/A'} {formData.originalInvoiceDate ? `dt. ${formData.originalInvoiceDate}` : ''}</strong>
-                        </div>
-                        <div style={{ padding: '4px' }}>
-                          <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Other References</span>
-                          <strong>{formData.otherRefs || 'N/A'}</strong>
-                        </div>
-                      </div>
-
-                      {/* Row 3 */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', borderBottom: '1.5px solid #000000', minHeight: '38px' }}>
-                        <div style={{ borderRight: '1.5px solid #000000', padding: '4px' }}>
-                          <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Vessel/Flight No.</span>
-                          <strong style={{ fontSize: '0.75rem' }}>{formData.vesselFlightNo}</strong>
-                        </div>
-                        <div style={{ padding: '4px' }}>
-                          <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>Place of receipt by shipper:</span>
-                          <strong>{formData.placeOfReceipt}</strong>
-                        </div>
-                      </div>
-
-                      {/* Row 4 */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', borderBottom: '1.5px solid #000000', minHeight: '38px' }}>
-                        <div style={{ borderRight: '1.5px solid #000000', padding: '4px' }}>
-                          <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>City/Port of Loading</span>
-                          <strong>{formData.portOfLoading}</strong>
-                        </div>
-                        <div style={{ padding: '4px' }}>
-                          <span style={{ display: 'block', fontSize: '0.6rem', color: '#555' }}>City/Port of Discharge</span>
-                          <strong>{formData.portOfDischarge}</strong>
-                        </div>
-                      </div>
-
-                      {/* Row 5 (Cargo dimensions) */}
-                      <div style={{ padding: '8px', lineHeight: 1.4, flexGrow: 1 }}>
-                        <strong>NO OF CTNS – {formData.ctns}</strong><br />
-                        <strong>CBM – {formData.cbm}</strong><br />
-                        <strong>WEIGHT – {formData.weight}</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Main Grid Table */}
-                  <div className="bill-table-container" style={{ border: '1.5px solid #000000' }}>
-                    <table className="bill-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem' }}>
-                      <thead>
-                        <tr>
-                          <th style={{ width: '8%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>Sl No.</th>
-                          <th style={{ width: '45%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>Particulars</th>
-                          <th style={{ width: '12%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>Quantity</th>
-                          <th style={{ width: '15%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>Rate</th>
-                          <th style={{ width: '10%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>per</th>
-                          <th style={{ width: '10%', textAlign: 'center', borderBottom: '1.5px solid #000000', padding: '4px' }}>Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {formData.items.map((item, idx) => {
-                          const isManual = item.amount !== undefined && item.amount !== '';
-                          const amt = isManual 
-                            ? (parseFloat(item.amount) || 0) 
-                            : (parseFloat(item.quantity) || 0) * (parseFloat(item.rate) || 0);
+                    {/* Main Grid Table */}
+                    <div className="bill-table-container" style={{ border: '1.5px solid #000000' }}>
+                      <table className="bill-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem' }}>
+                        <thead>
+                          <tr>
+                            <th style={{ width: '8%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>Sl No.</th>
+                            <th style={{ width: '45%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>Particulars</th>
+                            <th style={{ width: '12%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>Quantity</th>
+                            <th style={{ width: '15%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>Rate</th>
+                            <th style={{ width: '10%', textAlign: 'center', borderRight: '1.5px solid #000000', borderBottom: '1.5px solid #000000', padding: '4px' }}>per</th>
+                            <th style={{ width: '10%', textAlign: 'center', borderBottom: '1.5px solid #000000', padding: '4px' }}>Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {formData.items.map((item, idx) => {
+                            const cleanAmtStr = (item.amount || '').toString().replace(/[^0-9.]/g, '');
+                            const cleanQtyStr = (item.quantity || '').toString().replace(/[^0-9.]/g, '');
+                            const cleanRateStr = (item.rate || '').toString().replace(/[^0-9.]/g, '');
                             
-                          const qtyVal = item.quantity ? parseFloat(item.quantity) : null;
-                          const rateVal = item.rate ? parseFloat(item.rate) : null;
+                            const hasAmt = cleanAmtStr !== '' || (cleanQtyStr !== '' && cleanRateStr !== '');
+                            const amt = hasAmt
+                              ? (cleanAmtStr !== '' 
+                                  ? (parseFloat(cleanAmtStr) || 0) 
+                                  : (parseFloat(cleanQtyStr) || 0) * (parseFloat(cleanRateStr) || 0))
+                              : null;
+                              
+                            const qtyVal = cleanQtyStr !== '' ? parseFloat(cleanQtyStr) : null;
+                            const rateVal = cleanRateStr !== '' ? parseFloat(cleanRateStr) : null;
+                            const amtStr = amt !== null ? amt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
 
-                          return (
-                            <tr key={idx} className="bill-table-row">
-                              <td style={{ textAlign: 'center', borderRight: '1.5px solid #000000', padding: '6px' }}>{idx + 1}</td>
-                              <td style={{ whiteSpace: 'pre-line', borderRight: '1.5px solid #000000', padding: '6px', textAlign: 'left' }}>
-                                <strong style={{ display: 'block', fontSize: '0.75rem' }}>{item.particulars}</strong>
-                              </td>
-                              <td style={{ textAlign: 'right', borderRight: '1.5px solid #000000', padding: '6px' }}>{qtyVal !== null ? qtyVal : ''}</td>
-                              <td style={{ textAlign: 'right', borderRight: '1.5px solid #000000', padding: '6px' }}>{rateVal !== null ? rateVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}</td>
-                              <td style={{ borderRight: '1.5px solid #000000', padding: '6px', textAlign: 'center' }}>{item.per || ''}</td>
-                              <td style={{ textAlign: 'right', fontWeight: 800, padding: '6px' }}>{amt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                            </tr>
-                          );
-                        })}
+                            return (
+                              <tr key={idx} className="bill-table-row">
+                                <td style={{ textAlign: 'center', borderRight: '1.5px solid #000000', padding: '6px' }}>{idx + 1}</td>
+                                <td style={{ whiteSpace: 'pre-line', borderRight: '1.5px solid #000000', padding: '6px', textAlign: 'left' }}>
+                                  <strong style={{ display: 'block', fontSize: '0.75rem' }}>{item.particulars}</strong>
+                                </td>
+                                <td style={{ textAlign: 'right', borderRight: '1.5px solid #000000', padding: '6px' }}>{qtyVal !== null ? qtyVal : ''}</td>
+                                <td style={{ textAlign: 'right', borderRight: '1.5px solid #000000', padding: '6px' }}>{rateVal !== null ? rateVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}</td>
+                                <td style={{ borderRight: '1.5px solid #000000', padding: '6px', textAlign: 'center' }}>{item.per || ''}</td>
+                                <td style={{ textAlign: 'right', fontWeight: 800, padding: '6px' }}>{amtStr}</td>
+                              </tr>
+                            );
+                          })}
 
                         {/* Extra padding rows to keep height scaled like standard A4 template */}
                         {Array.from({ length: Math.max(0, 6 - formData.items.length) }).map((_, idx) => (
@@ -1250,6 +1294,35 @@ export default function Dashboard({ onLogout }) {
           </div>
         )}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="mobile-nav">
+        <button 
+          className={`mobile-nav-link ${activeTab === 'overview' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('overview')}
+        >
+          <LayoutDashboard className="mobile-nav-icon" />
+          <span>Overview</span>
+        </button>
+        <button 
+          className={`mobile-nav-link ${activeTab === 'creator' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('creator')}
+        >
+          <Plus className="mobile-nav-icon" />
+          <span>Create</span>
+        </button>
+        <button 
+          className={`mobile-nav-link ${activeTab === 'history' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('history')}
+        >
+          <History className="mobile-nav-icon" />
+          <span>History</span>
+        </button>
+        <button className="mobile-nav-link logout" onClick={onLogout}>
+          <LogOut className="mobile-nav-icon" />
+          <span>Logout</span>
+        </button>
+      </div>
     </div>
   );
 }
