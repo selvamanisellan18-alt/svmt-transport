@@ -137,26 +137,25 @@ const DEFAULT_INVOICE = {
   companyState: 'Tamil Nadu, Code: 33',
   companyEmail: 'varahitpt104@gmail.com',
   companyWebsite: 'www.sreevaarahiammantransports.com',
-  debitNoteNo: 'SVAT/DN/26-27/13',
-  date: '30-April-26',
-  originalInvoiceNo: '888/DN/26-27/13',
-  originalInvoiceDate: '30-April-26',
-  otherRefs: 'N/A',
-  consigneeName: 'NEW SABARI SASTHA SHIPPING SERVICES',
-  consigneeAddress: 'NEW NO.3/88, BAZAR STREET, POOLAVADI POST, UDUMALPET - TIRUPPUR, TAMIL NADU - 642206 - INDIA',
-  consigneeGst: '33AVDPT0410D1Z9',
-  consigneeState: 'Tamil Nadu, Code: 33',
-  consigneeEmail: 'newsabaritrp@gmail.com',
-  vesselFlightNo: 'TN 34 AL 1481',
-  placeOfReceipt: 'TIRUPUR CFS',
-  portOfLoading: 'TIRUPUR CFS',
-  portOfDischarge: 'NHAVA SHEVA, MUMBAI',
-  ctns: '640 CTNS',
-  cbm: '94.550 CBM',
-  weight: '8602.800 KGS',
+  debitNoteNo: '',
+  date: '',
+  originalInvoiceNo: '',
+  originalInvoiceDate: '',
+  otherRefs: '',
+  consigneeName: '',
+  consigneeAddress: '',
+  consigneeGst: '',
+  consigneeState: '',
+  consigneeEmail: '',
+  vesselFlightNo: '',
+  placeOfReceipt: '',
+  portOfLoading: '',
+  portOfDischarge: '',
+  ctns: '',
+  cbm: '',
+  weight: '',
   items: [
-    { particulars: 'VEHICLE HIRING CHARGES', quantity: '', rate: '', per: '', amount: 58000 },
-    { particulars: "HALTING CHARGES\n(2 DAYS)", quantity: '', rate: '', per: '', amount: 4000 }
+    { particulars: '', quantity: '', rate: '', per: '', amount: '' }
   ],
   bankName: 'BANK OF BARODA',
   bankAccount: '18930200002289',
@@ -188,11 +187,11 @@ export default function Dashboard({ onLogout }) {
     }
   ]);
 
-  const [subtotal, setSubtotal] = useState(62000);
+  const [subtotal, setSubtotal] = useState(0);
   const [cgstAmount, setCgstAmount] = useState(0);
   const [sgstAmount, setSgstAmount] = useState(0);
   const [igstAmount, setIgstAmount] = useState(0);
-  const [totalAmount, setTotalAmount] = useState(62000);
+  const [totalAmount, setTotalAmount] = useState(0);
   const [amountInWords, setAmountInWords] = useState('');
 
   // Autocomplete Particulars suggestion state
@@ -256,6 +255,35 @@ export default function Dashboard({ onLogout }) {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleClearForm = () => {
+    setFormData(prev => ({
+      ...prev,
+      debitNoteNo: '',
+      date: '',
+      originalInvoiceNo: '',
+      originalInvoiceDate: '',
+      otherRefs: '',
+      consigneeName: '',
+      consigneeAddress: '',
+      consigneeGst: '',
+      consigneeState: '',
+      consigneeEmail: '',
+      vesselFlightNo: '',
+      placeOfReceipt: '',
+      portOfLoading: '',
+      portOfDischarge: '',
+      ctns: '',
+      cbm: '',
+      weight: '',
+      items: [
+        { particulars: '', quantity: '', rate: '', per: '', amount: '' }
+      ],
+      gstRate: '0',
+      gstType: 'CGST_SGST',
+      wordsOverride: ''
     }));
   };
 
@@ -452,7 +480,7 @@ export default function Dashboard({ onLogout }) {
             <div style={{ textAlign: 'left', backgroundColor: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
               <h3 style={{ marginBottom: '1.5rem', fontWeight: 700 }}>Quick Actions</h3>
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <button className="btn-primary" onClick={() => setActiveTab('creator')}>
+                <button className="btn-primary" onClick={() => { handleClearForm(); setActiveTab('creator'); }}>
                   Create New Invoice
                 </button>
                 <button className="btn-outline" onClick={() => setActiveTab('history')}>
@@ -469,6 +497,9 @@ export default function Dashboard({ onLogout }) {
             <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="dashboard-title">Create / Edit Invoice</h2>
               <div style={{ display: 'flex', gap: '1rem' }}>
+                <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#EF4444', borderColor: '#EF4444' }} onClick={handleClearForm}>
+                  <Trash2 size={18} /> Clear Form
+                </button>
                 <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={handleSaveInvoice}>
                   <Save size={18} /> Save Invoice
                 </button>
@@ -907,6 +938,9 @@ export default function Dashboard({ onLogout }) {
 
                 {/* Bottom Actions Row inside Form */}
                 <div style={{ marginTop: '2.5rem', display: 'flex', gap: '1.25rem', borderTop: '1.5px solid var(--border-color)', paddingTop: '2rem' }}>
+                  <button className="btn-outline" style={{ flex: 1, padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', color: '#EF4444', borderColor: '#EF4444' }} onClick={handleClearForm}>
+                    <Trash2 size={20} /> Clear Form
+                  </button>
                   <button className="btn-outline" style={{ flex: 1, padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }} onClick={handleSaveInvoice}>
                     <Save size={20} /> Save Invoice
                   </button>
@@ -1064,7 +1098,7 @@ export default function Dashboard({ onLogout }) {
                             <tr key={idx} className="bill-table-row">
                               <td style={{ textAlign: 'center', borderRight: '1.5px solid #000000', padding: '6px' }}>{idx + 1}</td>
                               <td style={{ whiteSpace: 'pre-line', borderRight: '1.5px solid #000000', padding: '6px', textAlign: 'left' }}>
-                                <strong style={{ display: 'block', fontSize: '0.75rem' }}>{item.particulars || 'CHARGES'}</strong>
+                                <strong style={{ display: 'block', fontSize: '0.75rem' }}>{item.particulars}</strong>
                               </td>
                               <td style={{ textAlign: 'right', borderRight: '1.5px solid #000000', padding: '6px' }}>{qtyVal !== null ? qtyVal : ''}</td>
                               <td style={{ textAlign: 'right', borderRight: '1.5px solid #000000', padding: '6px' }}>{rateVal !== null ? rateVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''}</td>
