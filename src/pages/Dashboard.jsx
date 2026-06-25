@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, FileText, History, LogOut, Plus, Trash2, Printer, Save, DollarSign, Calendar, TrendingUp, Truck } from 'lucide-react';
+import LrCreator from './LrCreator';
 
 // Custom SVG Logo for SVAT matching the red crescent-shaped truck logo with TM trademark
 const SVATLogo = () => (
@@ -437,6 +438,15 @@ export default function Dashboard({ onLogout }) {
               >
                 <FileText className="sidebar-icon" />
                 Invoice Creator
+              </button>
+            </li>
+            <li className="sidebar-item">
+              <button 
+                className={`sidebar-link ${activeTab === 'lr' ? 'active' : ''}`}
+                onClick={() => setActiveTab('lr')}
+              >
+                <Truck className="sidebar-icon" />
+                LR Creator
               </button>
             </li>
             <li className="sidebar-item">
@@ -1306,6 +1316,11 @@ export default function Dashboard({ onLogout }) {
           </div>
         )}
 
+        {/* LR Creator Tab */}
+        {activeTab === 'lr' && (
+          <LrCreator />
+        )}
+
         {/* Invoice History Tab */}
         {activeTab === 'history' && (
           <div>
@@ -1350,6 +1365,13 @@ export default function Dashboard({ onLogout }) {
         >
           <Plus className="mobile-nav-icon" />
           <span>Create</span>
+        </button>
+        <button 
+          className={`mobile-nav-link ${activeTab === 'lr' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('lr')}
+        >
+          <Truck className="mobile-nav-icon" />
+          <span>LR</span>
         </button>
         <button 
           className={`mobile-nav-link ${activeTab === 'history' ? 'active' : ''}`} 

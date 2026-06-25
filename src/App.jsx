@@ -5,8 +5,13 @@ import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 
 function App() {
-  const [page, setPage] = useState('home');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('svat_is_logged_in') === 'true';
+  });
+  const [page, setPage] = useState(() => {
+    const loggedIn = localStorage.getItem('svat_is_logged_in') === 'true';
+    return loggedIn ? 'dashboard' : 'home';
+  });
 
   // Simple scroll helper
   const handleScrollTo = (id) => {
@@ -21,11 +26,13 @@ function App() {
 
   const handleLoginSuccess = () => {
     setIsLoggedIn(true);
+    localStorage.setItem('svat_is_logged_in', 'true');
     setPage('dashboard');
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    localStorage.removeItem('svat_is_logged_in');
     setPage('home');
   };
 
