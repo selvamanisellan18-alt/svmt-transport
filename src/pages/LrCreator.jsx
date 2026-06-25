@@ -185,7 +185,9 @@ export default function LrCreator() {
     return parseFloat(cleanStr) || 0;
   };
 
-  const freightAmount = getNumericValue(formData.charges.freightAmount);
+  const totalChargedWeight = (formData.cargoItems || []).reduce((sum, item) => sum + getNumericValue(item.chargedWeight), 0);
+  const freightPerKgCft = getNumericValue(formData.charges.freightPerKgCft);
+  const freightAmount = freightPerKgCft * totalChargedWeight;
   const hamali = getNumericValue(formData.charges.hamali);
   const doorPickup = getNumericValue(formData.charges.doorPickup);
   const doorDelivery = getNumericValue(formData.charges.doorDelivery);
@@ -278,7 +280,7 @@ export default function LrCreator() {
       localStorage.setItem('svat_goods_history', JSON.stringify(updated));
     }
 
-    const element = document.querySelector('.lr-preview-card');
+    const element = document.getElementById('lr-pdf-pages');
     if (!element) return;
 
     const filename = `LR_${(formData.lrNo || 'receipt').replace(/\//g, '_')}.pdf`;
@@ -288,12 +290,13 @@ export default function LrCreator() {
       filename:     filename,
       image:        { type: 'jpeg', quality: 1 },
       html2canvas:  { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0 },
-      jsPDF:        { unit: 'px', format: [1123, 794], orientation: 'landscape' }
+      jsPDF:        { unit: 'px', format: [1123, 794], orientation: 'landscape' },
+      pagebreak:    { mode: 'css' }
     };
     
+    const cards = element.querySelectorAll('.lr-preview-card');
+    cards.forEach(card => card.style.boxShadow = 'none');
     
-    
-    element.style.boxShadow = 'none';
     const scaleWrapper = document.getElementById('lr-scale-wrapper');
     if (scaleWrapper) {
       scaleWrapper.style.transform = 'scale(1)';
@@ -301,7 +304,7 @@ export default function LrCreator() {
     
     window.html2pdf().set(opt).from(element).save().then(() => {
       // Restore shadow
-      element.style.boxShadow = '0 10px 30px -10px rgba(0,0,0,0.5)';
+      cards.forEach(card => card.style.boxShadow = '0 10px 30px -10px rgba(0,0,0,0.5)');
       if (scaleWrapper) {
         scaleWrapper.style.transform = `scale(${previewScale})`;
       }
@@ -321,6 +324,85 @@ export default function LrCreator() {
     const rsFormatted = parseInt(parts[0]).toLocaleString('en-IN');
     return { rs: rsFormatted, ps: parts[1] };
   };
+
+  const cargoChunks = (() => {
+    const arr = formData.cargoItems || [];
+    if (arr.length === 0) return [[]];
+    const chunks = [];
+    let currentChunk = [];
+    let currentLines = 0;
+    const MAX_LINES_PER_PAGE = 8;
+    const CHARS_PER_LINE = 55;
+    
+    const splitText = (text) => {
+      if (!text) return [''];
+      const lines = text.split('\n');
+      const result = [];
+      lines.forEach(line => {
+        if (line.trim() === '') {
+          result.push('');
+          return;
+        }
+        let currentLine = '';
+        const words = line.split(' ');
+        words.forEach(w => {
+          while (w.length > CHARS_PER_LINE) {
+            if (currentLine) {
+              result.push(currentLine.trim());
+              currentLine = '';
+            }
+            result.push(w.substring(0, CHARS_PER_LINE));
+            w = w.substring(CHARS_PER_LINE);
+          }
+          if (w) {
+            if (currentLine.length + w.length + 1 > CHARS_PER_LINE) {
+              result.push(currentLine.trim());
+              currentLine = w + ' ';
+            } else {
+              currentLine += w + ' ';
+            }
+          }
+        });
+        if (currentLine) {
+          result.push(currentLine.trim());
+        }
+      });
+      return result.length > 0 ? result : [''];
+    };
+
+    arr.forEach(item => {
+      let descLines = splitText(item.goodsDescription || '');
+      let isFirstPiece = true;
+
+      while (descLines.length > 0) {
+        const availableLines = MAX_LINES_PER_PAGE - currentLines;
+        if (availableLines <= 0) {
+          chunks.push(currentChunk);
+          currentChunk = [];
+          currentLines = 0;
+          continue;
+        }
+
+        const linesToTake = Math.min(descLines.length, availableLines);
+        const takenLines = descLines.splice(0, linesToTake);
+
+        currentChunk.push({
+          noOfPackages: isFirstPiece ? item.noOfPackages : '',
+          goodsDescription: takenLines.join('\n'),
+          actualWeight: isFirstPiece ? item.actualWeight : '',
+          chargedWeight: isFirstPiece ? item.chargedWeight : ''
+        });
+
+        currentLines += linesToTake;
+        isFirstPiece = false;
+      }
+    });
+
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk);
+    }
+    return chunks;
+  })();
 
   return (
     <div>
@@ -767,7 +849,7 @@ export default function LrCreator() {
                 placeholder="e.g. 9111"
                 maxLength={8}
                 value={formData.charges.freightAmount}
-                onChange={(e) => handleChargeChange('freightAmount', e.target.value)}
+                readOnly
               />
             </div>
             <div className="form-group">
@@ -922,7 +1004,7 @@ export default function LrCreator() {
             {/* Scale wrapper to prevent scrolling and shrink card visually */}
             <div style={{ 
               width: `${1123 * previewScale}px`, 
-              height: `${cardHeight * previewScale}px`, 
+              height: `${cardHeight * cargoChunks.length * previewScale}px`, 
               position: 'relative',
               margin: '0 auto'
             }}>
@@ -933,11 +1015,20 @@ export default function LrCreator() {
                 top: 0,
                 left: 0,
                 width: '1123px',
-                height: `${cardHeight}px`
+                height: `${cardHeight * cargoChunks.length}px`,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0px'
               }}>
-                {/* The actual printable receipt card */}
-                <div className="lr-preview-card" ref={cardRef}>
-              <div className="lr-preview-card-inner">
+                <div id="lr-pdf-pages" style={{ display: 'flex', flexDirection: 'column', gap: '0px', width: '100%' }}>
+                  {cargoChunks.map((chunk, pageIndex) => (
+                    <div key={pageIndex} style={{ width: '100%' }}>
+                      {pageIndex > 0 && <div className="html2pdf__page-break" style={{ height: 0, margin: 0, padding: 0 }}></div>}
+                      <div 
+                        className="lr-preview-card" 
+                        ref={pageIndex === 0 ? cardRef : null}
+                      >
+                        <div className="lr-preview-card-inner">
                 {/* Top Header Section */}
                 <div style={{ display: 'flex', width: '100%', alignItems: 'stretch', borderBottom: '2px solid #08103A' }}>
                   
@@ -947,8 +1038,8 @@ export default function LrCreator() {
                   </div>
 
                   {/* Tax Info Box */}
-                  <div style={{ width: '13%', borderRight: '2px solid #08103A', padding: '2px 2px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <table style={{ fontSize: '0.5rem', fontWeight: 'bold', lineHeight: '1.2', borderCollapse: 'collapse', width: '100%' }}>
+                  <div style={{ width: '17%', borderRight: '2px solid #08103A', padding: '2px 4px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <table style={{ fontSize: '0.6rem', fontWeight: '900', lineHeight: '1.3', borderCollapse: 'collapse', width: '100%' }}>
                       <tbody>
                         <tr>
                           <td style={{ padding: '0' }}>GSTIN</td>
@@ -963,15 +1054,15 @@ export default function LrCreator() {
                           <td style={{ padding: '0' }}>: {formData.companyUdyam}</td>
                         </tr>
                         <tr>
-                          <td style={{ padding: '0', verticalAlign: 'top' }}>ISO<br/><span style={{fontSize:'0.35rem'}}>Certificate</span></td>
-                          <td style={{ padding: '0', verticalAlign: 'bottom' }}>: {formData.companyIso}</td>
+                          <td style={{ padding: '0', whiteSpace: 'nowrap' }}>ISO <span style={{fontSize:'0.45rem'}}>Certificate</span></td>
+                          <td style={{ padding: '0' }}>: {formData.companyIso}</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
                   {/* Main Title Box */}
-                  <div style={{ width: '60%', padding: '2px 0', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                  <div style={{ width: '56%', padding: '2px 0', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                     <div style={{ paddingLeft: '20px', margin: '0 0 2px 0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                       <img src="/Title.png" alt="SREE VAARAHI AMMAN TRANSPORTS" style={{ height: '40px', width: '580px', maxWidth: '100%', objectFit: 'contain' }} />
                     </div>
@@ -1227,7 +1318,7 @@ export default function LrCreator() {
                               </tr>
                             </thead>
                             <tbody>
-                              {(formData.cargoItems || []).map((item, index) => (
+                              {chunk.map((item, index) => (
                                 <tr key={index}>
                                   <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', textAlign: 'center', verticalAlign: 'top', fontSize: '0.8rem', fontWeight: 'bold', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>{item.noOfPackages || '\u00A0'}</td>
                                   <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', verticalAlign: 'top', fontSize: '0.85rem', fontWeight: 'bold', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>{item.goodsDescription || '\u00A0'}</td>
@@ -1235,15 +1326,7 @@ export default function LrCreator() {
                                   <td style={{ padding: '6px 8px', textAlign: 'center', verticalAlign: 'top', fontSize: '0.8rem', fontWeight: 'bold', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>{item.chargedWeight || '\u00A0'}</td>
                                 </tr>
                               ))}
-                              {/* Filler rows for height scaling */}
-                              {Array.from({ length: Math.max(0, 4 - (formData.cargoItems || []).length) }).map((_, idx) => (
-                                <tr key={`filler-${idx}`} style={{ height: '65px' }}>
-                                  <td style={{ borderRight: '1.5px solid #08103A' }}></td>
-                                  <td style={{ borderRight: '1.5px solid #08103A' }}></td>
-                                  <td style={{ borderRight: '1.5px solid #08103A' }}></td>
-                                  <td></td>
-                                </tr>
-                              ))}
+
                               {/* Dummy row to absorb remaining vertical space so cargo items aren't stretched */}
                               <tr style={{ height: '100%' }}>
                                 <td style={{ borderRight: '1.5px solid #08103A' }}></td>
@@ -1262,35 +1345,14 @@ export default function LrCreator() {
                               <td colSpan={2} style={{ width: '60%', borderRight: '1.5px solid #08103A', borderBottom: '1.5px solid #08103A', padding: '6px 8px' }}>
                                 <div style={{ display: 'flex', alignItems: 'flex-end', fontSize: '0.7rem', width: '100%' }}>
                                   <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>E-way Bill No:</span>
-                                  <span style={{ 
-                                    fontWeight: 'bold', 
-                                    fontSize: '0.8rem', 
-                                    flex: 1, 
-                                    marginLeft: '4px',
-                                    backgroundImage: `url("${DOTTED_LINE_SVG}")`,
-                                    backgroundSize: '4px 1.25rem',
-                                    backgroundRepeat: 'repeat-x',
-                                    backgroundPosition: 'bottom left',
-                                    minHeight: '1.1rem',
-                                    paddingBottom: '1px'
-                                  }}>
+                                  <span style={{ fontWeight: 'bold', fontSize: '0.8rem', marginLeft: '4px' }}>
                                     {formData.ewayBillNo || '\u00A0'}
                                   </span>
                                 </div>
                               </td>
                               <td rowSpan={2} style={{ width: '40%', padding: '6px 8px', verticalAlign: 'top' }}>
                                 <div style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>Private Marks :</div>
-                                <div style={{ 
-                                  fontWeight: 'bold', 
-                                  fontSize: '0.8rem', 
-                                  marginTop: '6px',
-                                  backgroundImage: `url("${DOTTED_LINE_SVG}")`,
-                                  backgroundSize: '4px 1.25rem',
-                                  backgroundRepeat: 'repeat-x',
-                                  backgroundPosition: 'bottom left',
-                                  minHeight: '1.1rem',
-                                  paddingBottom: '1px'
-                                }}>
+                                <div style={{ fontWeight: 'bold', fontSize: '0.8rem', marginTop: '6px' }}>
                                   {formData.privateMarks || '\u00A0'}
                                 </div>
                               </td>
@@ -1299,18 +1361,7 @@ export default function LrCreator() {
                               <td style={{ width: '30%', borderRight: '1.5px solid #08103A', padding: '6px 8px' }}>
                                 <div style={{ display: 'flex', alignItems: 'flex-end', fontSize: '0.7rem', width: '100%' }}>
                                   <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Invoice No:</span>
-                                  <span style={{ 
-                                    fontWeight: 'bold', 
-                                    fontSize: '0.8rem', 
-                                    flex: 1, 
-                                    marginLeft: '4px',
-                                    backgroundImage: `url("${DOTTED_LINE_SVG}")`,
-                                    backgroundSize: '4px 1.25rem',
-                                    backgroundRepeat: 'repeat-x',
-                                    backgroundPosition: 'bottom left',
-                                    minHeight: '1.1rem',
-                                    paddingBottom: '1px'
-                                  }}>
+                                  <span style={{ fontWeight: 'bold', fontSize: '0.8rem', marginLeft: '4px' }}>
                                     {formData.invoiceNo || '\u00A0'}
                                   </span>
                                 </div>
@@ -1318,18 +1369,7 @@ export default function LrCreator() {
                               <td style={{ width: '30%', borderRight: '1.5px solid #08103A', padding: '6px 8px' }}>
                                 <div style={{ display: 'flex', alignItems: 'flex-end', fontSize: '0.7rem', width: '100%' }}>
                                   <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Value Rs:</span>
-                                  <span style={{ 
-                                    fontWeight: 'bold', 
-                                    fontSize: '0.8rem', 
-                                    flex: 1, 
-                                    marginLeft: '4px',
-                                    backgroundImage: `url("${DOTTED_LINE_SVG}")`,
-                                    backgroundSize: '4px 1.25rem',
-                                    backgroundRepeat: 'repeat-x',
-                                    backgroundPosition: 'bottom left',
-                                    minHeight: '1.1rem',
-                                    paddingBottom: '1px'
-                                  }}>
+                                  <span style={{ fontWeight: 'bold', fontSize: '0.8rem', marginLeft: '4px' }}>
                                     {formData.valueRs || '\u00A0'}
                                   </span>
                                 </div>
@@ -1435,7 +1475,7 @@ export default function LrCreator() {
                             </thead>
                             <tbody>
                               {[
-                                { label: 'Freight Per Kg. / CFT', amount: formData.charges.freightAmount },
+                                { label: 'Freight Per Kg. / CFT', amount: freightAmount },
                                 { label: 'Hamali', amount: formData.charges.hamali },
                                 { label: 'Door Pick-up Charges', amount: formData.charges.doorPickup },
                                 { label: 'Door Delivery Charges', amount: formData.charges.doorDelivery },
@@ -1447,19 +1487,18 @@ export default function LrCreator() {
                                 const { rs, ps } = getRsPs(item.amount);
                                 return (
                                   <tr key={idx} style={{ borderBottom: '1px solid rgba(8, 16, 58, 0.2)' }}>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px' }}>{item.label}</td>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold' }}>{rs}</td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'center', fontWeight: 'bold' }}>{ps}</td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px', fontWeight: '900', fontSize: '0.72rem', color: '#08103A' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', minHeight: '18px', height: '100%' }}>{item.label}</div>
+                                    </td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px', fontWeight: '900', fontSize: '0.75rem', color: '#08103A' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>{rs}</div>
+                                    </td>
+                                    <td style={{ padding: '4px 6px', fontWeight: '900', fontSize: '0.75rem', color: '#08103A' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>{ps}</div>
+                                    </td>
                                   </tr>
                                 );
                               })}
-                              
-                              {/* Dummy row to absorb remaining vertical space so standard rows aren't stretched */}
-                              <tr style={{ height: '100%' }}>
-                                <td style={{ borderRight: '1.5px solid #08103A', borderBottom: '1.5px solid #08103A' }}></td>
-                                <td style={{ borderRight: '1.5px solid #08103A', borderBottom: '1.5px solid #08103A' }}></td>
-                                <td style={{ borderBottom: '1.5px solid #08103A' }}></td>
-                              </tr>
 
                               {/* Subtotal */}
                               {(() => {
@@ -1536,17 +1575,16 @@ export default function LrCreator() {
                   </tr>
                 </tbody>
               </table>
-
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-
-              </div>
-            </div>
-
           </div>
         </div>
-
       </div>
-    </div>
+    </div>                  
   );
 }
