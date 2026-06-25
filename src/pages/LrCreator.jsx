@@ -110,6 +110,8 @@ const PHONE_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy
 
 export default function LrCreator() {
   const [formData, setFormData] = useState(DEFAULT_LR);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [showGoodsSuggestions, setShowGoodsSuggestions] = useState(false);
   const goodsInputRef = useRef(null);
   
@@ -233,12 +235,19 @@ export default function LrCreator() {
   };
 
   const handleClearForm = () => {
-    if (window.confirm("Are you sure you want to clear the LR form?")) {
-      setFormData(DEFAULT_LR);
-    }
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearForm = () => {
+    setFormData(DEFAULT_LR);
+    setShowClearConfirm(false);
   };
 
   const handleSaveLR = () => {
+    setShowSaveConfirm(true);
+  };
+
+  const confirmSaveLR = () => {
     // Add current goods description to local storage history list
     const currentGoods = (formData.cargoItems?.[0]?.goodsDescription || '').trim();
     if (currentGoods && !goodsHistory.includes(currentGoods)) {
@@ -268,7 +277,7 @@ export default function LrCreator() {
     }
     localStorage.setItem('svat_saved_lrs', JSON.stringify(savedLrs));
 
-    alert('LR Details saved successfully to local registry!');
+    setShowSaveConfirm(false);
   };
 
   const handleDownloadPDF = () => {
@@ -319,7 +328,7 @@ export default function LrCreator() {
   const getRsPs = (val) => {
     if (val === undefined || val === null || val === '') return { rs: '', ps: '' };
     const num = parseFloat(val);
-    if (isNaN(num)) return { rs: '', ps: '' };
+    if (isNaN(num) || num === 0) return { rs: '', ps: '' };
     const parts = num.toFixed(2).split('.');
     const rsFormatted = parseInt(parts[0]).toLocaleString('en-IN');
     return { rs: rsFormatted, ps: parts[1] };
@@ -983,15 +992,15 @@ export default function LrCreator() {
           </div>
 
           {/* Form Actions */}
-          <div className="form-actions-row">
-            <button className="btn-outline" style={{ flex: 1, padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', color: '#EF4444', borderColor: '#EF4444' }} onClick={handleClearForm}>
-              <Trash2 size={20} /> Clear
+          <div className="form-actions-row" style={{ marginTop: '20px' }}>
+            <button className="btn-outline" style={{ flex: 1, padding: '0.6rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem', color: '#EF4444', borderColor: '#EF4444', fontSize: '0.8rem' }} onClick={handleClearForm}>
+              <Trash2 size={16} /> Clear
             </button>
-            <button className="btn-outline" style={{ flex: 1, padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }} onClick={handleSaveLR}>
-              <Save size={20} /> Save LR
+            <button className="btn-outline" style={{ flex: 1, padding: '0.6rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem' }} onClick={handleSaveLR}>
+              <Save size={16} /> Save LR
             </button>
-            <button className="btn-primary" style={{ flex: 1, padding: '1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }} onClick={handleDownloadPDF}>
-              <Printer size={20} /> Download PDF
+            <button className="btn-primary" style={{ flex: 1, padding: '0.6rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem' }} onClick={handleDownloadPDF}>
+              <Printer size={16} /> Download PDF
             </button>
           </div>
 
@@ -1585,6 +1594,35 @@ export default function LrCreator() {
           </div>
         </div>
       </div>
+
+      {/* Custom Clear Confirmation Modal */}
+      {showClearConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: '#1E2330', padding: '24px', borderRadius: '8px', border: '1px solid #262D3D', color: '#fff', width: '300px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Clear Form</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '0.9rem', color: '#94A3B8' }}>Are you sure you want to clear the LR form?</p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn-outline" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => setShowClearConfirm(false)}>No</button>
+              <button className="btn-primary" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#EF4444', borderColor: '#EF4444', color: '#fff' }} onClick={confirmClearForm}>Yes, Clear</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Save Confirmation Modal */}
+      {showSaveConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: '#1E2330', padding: '24px', borderRadius: '8px', border: '1px solid #262D3D', color: '#fff', width: '300px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Save LR Details</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '0.9rem', color: '#94A3B8' }}>LR Details will be successfully saved to your local registry.</p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn-outline" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => setShowSaveConfirm(false)}>Cancel</button>
+              <button className="btn-primary" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={confirmSaveLR}>Save Details</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>                  
   );
 }
