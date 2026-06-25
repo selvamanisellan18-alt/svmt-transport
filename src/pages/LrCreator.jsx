@@ -356,14 +356,14 @@ export default function LrCreator() {
           color: #08103A !important;
           padding: 24px;
           width: 1123px; /* A4 Landscape Width at 96 DPI */
-          height: auto; /* Dynamic height */
-          min-height: 794px;
+          height: 794px; /* Strictly fixed A4 landscape height */
           flex-shrink: 0;
           box-sizing: border-box;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
           text-align: left;
           display: flex;
           flex-direction: column;
+          overflow: hidden;
         }
 
         .lr-preview-card-inner {
@@ -1217,7 +1217,7 @@ export default function LrCreator() {
                         
                         {/* Cargo Table Wrapper */}
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', height: '100%' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', height: '100%', tableLayout: 'fixed' }}>
                             <thead>
                               <tr style={{ borderBottom: '3px solid #08103A' }}>
                                 <th style={{ borderRight: '1.5px solid #08103A', padding: '6px', fontSize: '0.65rem', width: '15%' }}>No. of Packages</th>
@@ -1229,10 +1229,10 @@ export default function LrCreator() {
                             <tbody>
                               {(formData.cargoItems || []).map((item, index) => (
                                 <tr key={index}>
-                                  <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', textAlign: 'center', verticalAlign: 'top', fontSize: '0.8rem', fontWeight: 'bold' }}>{item.noOfPackages || '\u00A0'}</td>
-                                  <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', verticalAlign: 'top', fontSize: '0.85rem', fontWeight: 'bold' }}>{item.goodsDescription || '\u00A0'}</td>
-                                  <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', textAlign: 'center', verticalAlign: 'top', fontSize: '0.8rem', fontWeight: 'bold' }}>{item.actualWeight || '\u00A0'}</td>
-                                  <td style={{ padding: '6px 8px', textAlign: 'center', verticalAlign: 'top', fontSize: '0.8rem', fontWeight: 'bold' }}>{item.chargedWeight || '\u00A0'}</td>
+                                  <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', textAlign: 'center', verticalAlign: 'top', fontSize: '0.8rem', fontWeight: 'bold', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>{item.noOfPackages || '\u00A0'}</td>
+                                  <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', verticalAlign: 'top', fontSize: '0.85rem', fontWeight: 'bold', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>{item.goodsDescription || '\u00A0'}</td>
+                                  <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', textAlign: 'center', verticalAlign: 'top', fontSize: '0.8rem', fontWeight: 'bold', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>{item.actualWeight || '\u00A0'}</td>
+                                  <td style={{ padding: '6px 8px', textAlign: 'center', verticalAlign: 'top', fontSize: '0.8rem', fontWeight: 'bold', wordBreak: 'break-word', overflowWrap: 'break-word', whiteSpace: 'pre-wrap' }}>{item.chargedWeight || '\u00A0'}</td>
                                 </tr>
                               ))}
                               {/* Filler rows for height scaling */}
@@ -1343,10 +1343,12 @@ export default function LrCreator() {
                           <tbody>
                             <tr>
                               {/* Note Box */}
-                              <td style={{ width: '30%', borderRight: '3px solid #08103A', padding: '6px', verticalAlign: 'top', fontSize: '0.55rem', lineHeight: '1.3' }}>
-                                <strong style={{ fontSize: '0.65rem' }}>Note :</strong>
-                                <div style={{ marginTop: '4px', fontSize: '0.55rem', lineHeight: '1.2' }}>
-                                  This Consignment Note is issued under subject to terms & conditions Printed overleaf
+                              <td style={{ width: '30%', borderRight: '3px solid #08103A', padding: '4px 6px', verticalAlign: 'top' }}>
+                                <strong style={{ fontSize: '0.65rem', display: 'block', textAlign: 'left' }}>Note :</strong>
+                                <div style={{ marginTop: '2px', fontSize: '0.58rem', lineHeight: '1.25', textAlign: 'center', fontWeight: 'bold' }}>
+                                  This Consignment Note is issued under<br />
+                                  subject to terms & conditions<br />
+                                  Printed overleaf
                                 </div>
                               </td>
                               {/* Receiver's Signature Box */}
@@ -1376,12 +1378,12 @@ export default function LrCreator() {
                         </table>
 
                         {/* Bottom Footer Section */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 8px', borderTop: '3px solid #08103A' }}>
-                          <div style={{ fontSize: '0.55rem', fontWeight: 'bold', lineHeight: '1.2', textAlign: 'left' }}>
-                            TERMS & CONDITIONS<br />
-                            AND ANY ENQUIRES
+                        <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '30px', alignItems: 'center', padding: '4px 8px', borderTop: '3px solid #08103A' }}>
+                          <div style={{ lineHeight: '1.2', textAlign: 'left' }}>
+                            <span style={{ textDecoration: 'underline', fontWeight: '900', fontSize: '0.72rem' }}>TERMS & CONDITIONS</span><br />
+                            <span style={{ fontWeight: 'bold', fontSize: '0.62rem' }}>AND ANY ENQUIRES</span>
                           </div>
-                          <div style={{ fontSize: '1rem', fontWeight: '900', color: '#08103A', letterSpacing: '0.5px' }}>
+                          <div style={{ fontSize: '0.95rem', fontWeight: '900', color: '#08103A', letterSpacing: '0.5px' }}>
                             CONTACT : 9655237104
                           </div>
                         </div>
