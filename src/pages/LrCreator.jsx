@@ -1237,7 +1237,7 @@ export default function LrCreator() {
                               ))}
                               {/* Filler rows for height scaling */}
                               {Array.from({ length: Math.max(0, 4 - (formData.cargoItems || []).length) }).map((_, idx) => (
-                                <tr key={`filler-${idx}`} style={{ height: '70px' }}>
+                                <tr key={`filler-${idx}`} style={{ height: '65px' }}>
                                   <td style={{ borderRight: '1.5px solid #08103A' }}></td>
                                   <td style={{ borderRight: '1.5px solid #08103A' }}></td>
                                   <td style={{ borderRight: '1.5px solid #08103A' }}></td>
@@ -1423,12 +1423,12 @@ export default function LrCreator() {
 
                         {/* Charges breakdown table Wrapper */}
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', height: '100%' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.65rem', height: '100%' }}>
                             <thead>
                               <tr style={{ borderBottom: '1.5px solid #08103A' }}>
-                                <th style={{ borderRight: '1.5px solid #08103A', padding: '6px 4px', textAlign: 'center', width: '60%' }}>Particulars</th>
-                                <th style={{ borderRight: '1.5px solid #08103A', padding: '6px 4px', textAlign: 'center', width: '28%' }}>Rs.</th>
-                                <th style={{ padding: '6px 4px', textAlign: 'center', width: '12%' }}>Ps.</th>
+                                <th style={{ borderRight: '1.5px solid #08103A', padding: '4px', textAlign: 'center', width: '60%' }}>Particulars</th>
+                                <th style={{ borderRight: '1.5px solid #08103A', padding: '4px', textAlign: 'center', width: '28%' }}>Rs.</th>
+                                <th style={{ padding: '4px', textAlign: 'center', width: '12%' }}>Ps.</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1445,21 +1445,28 @@ export default function LrCreator() {
                                 const { rs, ps } = getRsPs(item.amount);
                                 return (
                                   <tr key={idx} style={{ borderBottom: '1px solid rgba(8, 16, 58, 0.2)' }}>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', verticalAlign: 'middle', fontWeight: 'bold' }}>{item.label}</td>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', textAlign: 'right', fontWeight: 'bold', verticalAlign: 'middle' }}>{rs}</td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle' }}>{ps}</td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px' }}>{item.label}</td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold' }}>{rs}</td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'center', fontWeight: 'bold' }}>{ps}</td>
                                   </tr>
                                 );
                               })}
                               
+                              {/* Dummy row to absorb remaining vertical space so standard rows aren't stretched */}
+                              <tr style={{ height: '100%' }}>
+                                <td style={{ borderRight: '1.5px solid #08103A', borderBottom: '1.5px solid #08103A' }}></td>
+                                <td style={{ borderRight: '1.5px solid #08103A', borderBottom: '1.5px solid #08103A' }}></td>
+                                <td style={{ borderBottom: '1.5px solid #08103A' }}></td>
+                              </tr>
+
                               {/* Subtotal */}
                               {(() => {
                                 const { rs, ps } = getRsPs(subtotal);
                                 return (
                                   <tr style={{ borderBottom: '1.5px solid #08103A' }}>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', fontWeight: '900', verticalAlign: 'middle' }}>SUB. TOTAL</td>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', textAlign: 'right', fontWeight: '900', verticalAlign: 'middle' }}>{rs}</td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: '900', verticalAlign: 'middle' }}>{ps}</td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px', fontWeight: 'bold' }}>SUB. TOTAL</td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold' }}>{rs}</td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'center', fontWeight: 'bold' }}>{ps}</td>
                                   </tr>
                                 );
                               })()}
@@ -1469,9 +1476,9 @@ export default function LrCreator() {
                                 const { rs, ps } = getRsPs(gstAmount);
                                 return (
                                   <tr style={{ borderBottom: '2px solid #08103A' }}>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', fontWeight: '900', verticalAlign: 'middle' }}>GST @ {formData.charges.gstRate}%</td>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '6px 8px', textAlign: 'right', fontWeight: '900', verticalAlign: 'middle' }}>{rs}</td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: '900', verticalAlign: 'middle' }}>{ps}</td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px', fontWeight: 'bold' }}>GST @ {formData.charges.gstRate}%</td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold' }}>{rs}</td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'center', fontWeight: 'bold' }}>{ps}</td>
                                   </tr>
                                 );
                               })()}
@@ -1481,9 +1488,9 @@ export default function LrCreator() {
                                 const { rs, ps } = getRsPs(totalAmount);
                                 return (
                                   <tr style={{ borderBottom: '3px solid #08103A' }}>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '8px 6px', fontWeight: '900', fontSize: '0.8rem', verticalAlign: 'middle' }}>G.TOTAL</td>
-                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '8px 6px', textAlign: 'right', fontWeight: '900', fontSize: '0.8rem', verticalAlign: 'middle' }}>{rs}</td>
-                                    <td style={{ padding: '8px 6px', textAlign: 'center', fontWeight: '900', fontSize: '0.8rem', verticalAlign: 'middle' }}>{ps}</td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '6px', fontWeight: '900', fontSize: '0.75rem' }}>G.TOTAL</td>
+                                    <td style={{ borderRight: '1.5px solid #08103A', padding: '6px', textAlign: 'right', fontWeight: '900', fontSize: '0.75rem' }}>{rs}</td>
+                                    <td style={{ padding: '6px', textAlign: 'center', fontWeight: '900', fontSize: '0.75rem' }}>{ps}</td>
                                   </tr>
                                 );
                               })()}
@@ -1494,8 +1501,8 @@ export default function LrCreator() {
                                 { label: 'CONSIGNEE COPY', checked: formData.consigneeCopy },
                                 { label: 'TRACK COPY', checked: formData.trackCopy }
                               ].map((copy, index) => (
-                                <tr key={`copy-${index}`} style={{ borderBottom: index < 2 ? '1.5px solid #08103A' : 'none', height: '28px' }}>
-                                  <td style={{ borderRight: '1.5px solid #08103A', padding: '4px 8px', fontWeight: '900', fontSize: '0.64rem', verticalAlign: 'middle' }}>
+                                <tr key={`copy-${index}`} style={{ borderBottom: index < 2 ? '1.5px solid #08103A' : 'none', height: '24px' }}>
+                                  <td style={{ borderRight: '1.5px solid #08103A', padding: '3px 6px', fontWeight: 'bold', fontSize: '0.58rem' }}>
                                     {copy.label}
                                   </td>
                                   <td colSpan={2} style={{ padding: '2px', textAlign: 'center', verticalAlign: 'middle' }}>
