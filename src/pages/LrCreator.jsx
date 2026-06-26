@@ -187,9 +187,24 @@ export default function LrCreator() {
     return parseFloat(cleanStr) || 0;
   };
 
+  const getWhatsAppUrl = (phone) => {
+    const digits = (phone || '').replace(/[^0-9]/g, '');
+    if (digits.length === 10) {
+      return `https://wa.me/91${digits}`;
+    }
+    return `https://wa.me/${digits}`;
+  };
+
+  const getTelUrl = (phone) => {
+    const digits = (phone || '').replace(/[^0-9]/g, '');
+    if (digits.length === 10) {
+      return `tel:+91${digits}`;
+    }
+    return `tel:${digits}`;
+  };
+
   const totalChargedWeight = (formData.cargoItems || []).reduce((sum, item) => sum + getNumericValue(item.chargedWeight), 0);
-  const freightPerKgCft = getNumericValue(formData.charges.freightPerKgCft);
-  const freightAmount = freightPerKgCft * totalChargedWeight;
+  const freightAmount = getNumericValue(formData.charges.freightAmount);
   const hamali = getNumericValue(formData.charges.hamali);
   const doorPickup = getNumericValue(formData.charges.doorPickup);
   const doorDelivery = getNumericValue(formData.charges.doorDelivery);
@@ -840,17 +855,6 @@ export default function LrCreator() {
           <h4 className="form-section-title">Lorry Freight & Charges Breakdown</h4>
           <div className="form-grid-3">
             <div className="form-group">
-              <label className="form-label">Freight/Kg or CFT Rate</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 1.10"
-                maxLength={8}
-                value={formData.charges.freightPerKgCft}
-                onChange={(e) => handleChargeChange('freightPerKgCft', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
               <label className="form-label">Freight Amount (Total)</label>
               <input 
                 type="text" 
@@ -858,7 +862,7 @@ export default function LrCreator() {
                 placeholder="e.g. 9111"
                 maxLength={8}
                 value={formData.charges.freightAmount}
-                readOnly
+                onChange={(e) => handleChargeChange('freightAmount', e.target.value)}
               />
             </div>
             <div className="form-group">
@@ -1087,17 +1091,34 @@ export default function LrCreator() {
 
                   {/* Contact Box */}
                   <div style={{ width: '19%', padding: '2px 4px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.6rem', fontWeight: 'bold' }}>
+                    <a 
+                      href={getWhatsAppUrl(formData.companyPhone1)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.6rem', fontWeight: 'bold', textDecoration: 'none', cursor: 'pointer' }}
+                      onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                    >
                       <img src={WHATSAPP_ICON_SVG} alt="WA" style={{verticalAlign:'middle'}}/>
                       <span>: {formData.companyPhone1}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.6rem', fontWeight: 'bold', marginTop: '3px' }}>
+                    </a>
+                    <a 
+                      href={getTelUrl(formData.companyPhone2)} 
+                      style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.6rem', fontWeight: 'bold', marginTop: '3px', textDecoration: 'none', cursor: 'pointer' }}
+                      onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                    >
                       <img src={PHONE_ICON_SVG} alt="Ph" style={{verticalAlign:'middle'}}/>
                       <span>: {formData.companyPhone2}</span>
-                    </div>
-                    <div style={{ fontSize: '0.52rem', fontWeight: '900', marginTop: '4px' }}>
+                    </a>
+                    <a 
+                      href={`mailto:${formData.companyEmail}`} 
+                      style={{ fontSize: '0.52rem', fontWeight: '900', marginTop: '4px', textDecoration: 'none', cursor: 'pointer' }}
+                      onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                      onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                    >
                       Mail: {formData.companyEmail}
-                    </div>
+                    </a>
                   </div>
                   
                 </div>
@@ -1432,8 +1453,35 @@ export default function LrCreator() {
                             <span style={{ textDecoration: 'underline', fontWeight: '900', fontSize: '0.72rem' }}>TERMS & CONDITIONS</span><br />
                             <span style={{ fontWeight: 'bold', fontSize: '0.62rem' }}>AND ANY ENQUIRES</span>
                           </div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: '900', color: '#08103A', letterSpacing: '0.5px' }}>
-                            CONTACT : 9655237104
+                          <div style={{ fontSize: '0.95rem', fontWeight: '900', color: '#08103A', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '30px' }}>
+                            <span>
+                              CONTACT : <a 
+                                href={getTelUrl('9655237104')} 
+                                style={{ 
+                                  color: '#08103A', 
+                                  textDecoration: 'none', 
+                                  cursor: 'pointer' 
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                              >
+                                9655237104
+                              </a>
+                            </span>
+                            <a 
+                              href="https://www.sreevaarahiammantransports.com" 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              style={{ 
+                                color: '#08103A', 
+                                textDecoration: 'underline', 
+                                fontSize: '0.95rem', 
+                                fontWeight: '900',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              www.sreevaarahiammantransports.com
+                            </a>
                           </div>
                         </div>
 
