@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
 
-const Quotation = ({ type = 'export', loadedData = null }) => {
+const Quotation = ({ type = 'export', loadedData = null, triggerToast = null }) => {
   const [deliveryCharges, setDeliveryCharges] = useState({
     mumbaiCbm: '',
     mumbaiFabric: '',
@@ -74,7 +74,11 @@ const Quotation = ({ type = 'export', loadedData = null }) => {
     }
     
     localStorage.setItem('svat_saved_quotations', JSON.stringify(savedQuotes));
-    alert('Quotation saved successfully to history!');
+    if (triggerToast) {
+      triggerToast('Quotation saved successfully to history!');
+    } else {
+      alert('Quotation saved successfully to history!');
+    }
   };
 
   const handleDownloadPDF = (contentId, filename) => {
@@ -85,7 +89,7 @@ const Quotation = ({ type = 'export', loadedData = null }) => {
       margin:       0.2,
       filename:     filename,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      html2canvas:  { scale: 3.5, useCORS: true, logging: false },
       jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
     

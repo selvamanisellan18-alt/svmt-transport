@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Printer, Save, Truck, Info } from 'lucide-react';
 
 // Suggestions Dropdown component with prefix-first sorting
-const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
+const SuggestionsDropdown = ({ query, list, onSelect }) => {
   const lowerQuery = (query || '').toLowerCase();
   const filtered = list.filter(val => 
     val.toLowerCase().includes(lowerQuery) && 
@@ -17,18 +17,10 @@ const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
     return a.localeCompare(b);
   });
 
-  useEffect(() => {
-    const handleOutsideClick = () => {
-      setTimeout(onClose, 200);
-    };
-    document.addEventListener('click', handleOutsideClick);
-    return () => document.removeEventListener('click', handleOutsideClick);
-  }, [onClose]);
-
   if (filtered.length === 0) return null;
 
   return (
-    <ul style={{
+    <ul className="suggestions-dropdown-list" style={{
       position: 'absolute',
       top: '100%',
       left: 0,
@@ -36,7 +28,7 @@ const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
       backgroundColor: '#1E2330',
       border: '1px solid #262D3D',
       borderRadius: '6px',
-      maxHeight: '150px',
+      maxHeight: '180px',
       overflowY: 'auto',
       zIndex: 100,
       listStyle: 'none',
@@ -269,8 +261,44 @@ const DOTTED_LINE_SVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3d
 const WHATSAPP_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgd2lkdGg9JzExJyBoZWlnaHQ9JzExJz48cGF0aCBmaWxsPScjMDgxMDNBJyBkPSdNMTIuMDEgMi4wMWMtNS41MiAwLTEwIDQuNDgtMTAgMTAgMCAxLjk1LjU2IDMuNzYgMS41MSA1LjI1TDIuMDEgMjJsNC44OS0xLjQ4YzEuNDYuODggMy4xOSAxLjQgNS4wMyAxLjQgNS41MiAwIDEwLTQuNDggMTAtMTBzLTQuNDgtMTAtMTAtMTB6bTUuOCAxNC4xMmMtLjI2Ljc0LTEuNTIgMS40My0yLjEyIDEuNS0uNi4wNy0xLjM5LjItMy45NS0xLjA0LTMuMDktMS40OS01LjA3LTQuNjYtNS4yMy00Ljg4LS4xNS0uMjItMS4yNS0xLjY2LTEuMjUtMy4xNyAwLTEuNTEuNzgtMi4yNSAxLjA1LTIuNTUuMjgtLjMuNi0uMzcuOC0uMzdzLjQuMDEuNTcuMDFjLjE4IDAgLjQyLS4wNy42NS40OS4yMy41Ni43OCAxLjkxLjg1IDIuMDYuMDcuMTUuMTIuMzMuMDIuNTMtLjEuMi0uMTUuMzMtLjMuNS0uMTUuMTgtLjMyLjM5LS40NC41LS4xNS4xNC0uMzEuMjgtLjE0LjU4LjE3LjMgMS41IDIuMTQgMS43NiAyLjQ1LjI3LjMxLjU0LjQuODQuMjYuMy0uMTQuNDgtLjQ4LjctLjcuMTctLjE4LjM1LS4xNS41NS0uMDcuMi4wNyAxLjI1LjU5IDEuNDcuNy4yLjExLjMzLjE3LjM4LjI2LjA1LjEuMDUuNTgtLjIgMS4zMnonLz48L3N2Zz4=';
 const PHONE_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgd2lkdGg9JzExJyBoZWlnaHQ9JzExJz48cGF0aCBmaWxsPScjMDgxMDNBJyBkPSdNMjAgMTUuNWMtMS4yIDAtMi40LS4yLTMuNi0uNi0uMy0uMS0uNyAwLTEgLjJsLTIuMiAyLjJjLTIuOC0xLjQtNS4xLTMuOC02LjYtNi42bDIuMi0yLjJjLjMtLjMuNC0uNy4yLTEtLjQtMS4yLS42LTIuNC0uNi0zLjYgMC0uNi0uNS0xLTEtMUg0Yy0uNiAwLTEgLjUtMSAxIDAgOS40IDcuNiAxNyAxNyAxNyAuNiAwIDEtLjUgMS0xdi0zLjVjMC0uNS0uNS0xLTEtMXpNMTkgMTJoMmMwLTQuOC0zLjktOC43LTguNy04Ljd2MmMzLjcgMCA2LjcgMyA2LjcgNi43eicvPjwvc3ZnPg==';
 
-export default function LrCreator({ loadedLr = null }) {
+export default function LrCreator({ loadedLr = null, triggerToast = null }) {
   const [formData, setFormData] = useState(DEFAULT_LR);
+  const [signatureImage, setSignatureImage] = useState(() => {
+    return localStorage.getItem('svat_signature_image') || '';
+  });
+
+  const handleSignatureUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      if (triggerToast) {
+        triggerToast('Image size should be less than 5MB', 'error');
+      } else {
+        alert('Image size should be less than 5MB');
+      }
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target.result;
+      setSignatureImage(base64);
+      localStorage.setItem('svat_signature_image', base64);
+      if (triggerToast) {
+        triggerToast('Signature uploaded successfully!');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveSignature = () => {
+    setSignatureImage('');
+    localStorage.removeItem('svat_signature_image');
+    if (triggerToast) {
+      triggerToast('Signature removed.');
+    }
+  };
 
   useEffect(() => {
     if (loadedLr) {
@@ -518,7 +546,11 @@ export default function LrCreator({ loadedLr = null }) {
     setSavedLrs(currentSavedLrs);
 
     setShowSaveConfirm(false);
-    alert('LR saved successfully to history!');
+    if (triggerToast) {
+      triggerToast('LR saved successfully to history!');
+    } else {
+      alert('LR saved successfully to history!');
+    }
   };
 
   const handleDownloadPDF = () => {
@@ -539,13 +571,16 @@ export default function LrCreator({ loadedLr = null }) {
       margin:       0,
       filename:     filename,
       image:        { type: 'jpeg', quality: 1 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: 0 },
+      html2canvas:  { scale: 3, useCORS: true, logging: false, scrollX: 0, scrollY: 0 },
       jsPDF:        { unit: 'px', format: [1123, 794], orientation: 'landscape' },
       pagebreak:    { mode: 'css' }
     };
     
     const cards = element.querySelectorAll('.lr-preview-card');
-    cards.forEach(card => card.style.boxShadow = 'none');
+    cards.forEach(card => {
+      card.style.boxShadow = 'none';
+      card.style.marginBottom = '0';
+    });
     
     const scaleWrapper = document.getElementById('lr-scale-wrapper');
     if (scaleWrapper) {
@@ -553,8 +588,11 @@ export default function LrCreator({ loadedLr = null }) {
     }
     
     window.html2pdf().set(opt).from(element).save().then(() => {
-      // Restore shadow
-      cards.forEach(card => card.style.boxShadow = '0 10px 30px -10px rgba(0,0,0,0.5)');
+      // Restore shadow and margins
+      cards.forEach((card, idx) => {
+        card.style.boxShadow = '0 10px 30px -10px rgba(0,0,0,0.5)';
+        card.style.marginBottom = idx < cargoChunks.length - 1 ? '20px' : '0';
+      });
       if (scaleWrapper) {
         scaleWrapper.style.transform = `scale(${previewScale})`;
       }
@@ -658,6 +696,27 @@ export default function LrCreator({ loadedLr = null }) {
     <div>
       {/* Styles for LR Creator component to ensure exact replica and colors */}
       <style>{`
+        /* Custom scrollbar for suggestions dropdown */
+        .suggestions-dropdown-list {
+          scrollbar-width: thin;
+          scrollbar-color: #f1b400 #262d3d;
+        }
+        .suggestions-dropdown-list::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        .suggestions-dropdown-list::-webkit-scrollbar-track {
+          background: #262d3d;
+          border-radius: 6px;
+        }
+        .suggestions-dropdown-list::-webkit-scrollbar-thumb {
+          background: #f1b400;
+          border-radius: 6px;
+        }
+        .suggestions-dropdown-list::-webkit-scrollbar-thumb:hover {
+          background: #d9a200;
+        }
+
         .lr-workspace {
           display: grid;
           grid-template-columns: 350px 1fr;
@@ -677,8 +736,7 @@ export default function LrCreator({ loadedLr = null }) {
           position: sticky;
           top: 100px;
           max-height: calc(100vh - 120px);
-          overflow-y: auto;
-          overflow-x: hidden;
+          overflow: auto;
           padding-right: 0.5rem;
           width: 100%;
         }
@@ -1168,6 +1226,87 @@ export default function LrCreator({ loadedLr = null }) {
             </div>
           </div>
 
+          {/* Authorized Signature Upload */}
+          <h4 className="form-section-title">Authorized Signature</h4>
+          <div style={{ 
+            marginBottom: '1.5rem', 
+            backgroundColor: '#1E2330', 
+            padding: '12px', 
+            borderRadius: '6px', 
+            border: '1px solid #262D3D',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleSignatureUpload} 
+                style={{ display: 'none' }}
+                id="sig-upload-input"
+              />
+              <label 
+                htmlFor="sig-upload-input" 
+                className="btn-outline" 
+                style={{ 
+                  padding: '6px 12px', 
+                  fontSize: '0.8rem', 
+                  cursor: 'pointer',
+                  borderColor: 'rgba(241, 180, 0, 0.4)',
+                  color: '#F1B400',
+                  margin: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  borderRadius: '4px',
+                  borderWidth: '1.5px',
+                  borderStyle: 'solid'
+                }}
+              >
+                Upload Signature Image
+              </label>
+              {signatureImage && (
+                <button 
+                  className="btn-outline" 
+                  style={{ 
+                    padding: '6px 12px', 
+                    fontSize: '0.8rem', 
+                    color: '#EF4444', 
+                    borderColor: '#EF4444',
+                    margin: 0,
+                    borderRadius: '4px'
+                  }}
+                  onClick={handleRemoveSignature}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Supports JPG, PNG, WEBP, etc. Max size 5MB.
+            </span>
+            {signatureImage && (
+              <div style={{ 
+                marginTop: '8px', 
+                backgroundColor: '#FFFFFF', 
+                padding: '4px 8px', 
+                borderRadius: '4px', 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                maxHeight: '40px',
+                alignSelf: 'flex-start'
+              }}>
+                <img 
+                  src={signatureImage} 
+                  alt="Signature Preview" 
+                  style={{ maxHeight: '32px', objectFit: 'contain' }} 
+                />
+              </div>
+            )}
+          </div>
+
           {/* Copy indicators checklist */}
           <h4 className="form-section-title">Copy Type Selection</h4>
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', backgroundColor: '#1E2330', padding: '10px', borderRadius: '6px', border: '1px solid #262D3D' }}>
@@ -1364,7 +1503,7 @@ export default function LrCreator({ loadedLr = null }) {
                             marginBottom: '4px'
                           }}>
                             <span style={{ fontWeight: 'bold', display: 'inline-block', width: '55px' }}>Address :</span>
-                            <span>{formData.consignorAddress}</span>
+                            <span style={{ fontWeight: 'bold' }}>{formData.consignorAddress}</span>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -1424,7 +1563,7 @@ export default function LrCreator({ loadedLr = null }) {
                             marginBottom: '4px'
                           }}>
                             <span style={{ fontWeight: 'bold', display: 'inline-block', width: '55px' }}>Address :</span>
-                            <span>{formData.consigneeAddress}</span>
+                            <span style={{ fontWeight: 'bold' }}>{formData.consigneeAddress}</span>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -1575,7 +1714,7 @@ export default function LrCreator({ loadedLr = null }) {
                           <tbody>
                             <tr>
                               <td colSpan={2} style={{ width: '60%', borderRight: '1.5px solid #08103A', borderBottom: '1.5px solid #08103A', padding: '6px 8px' }}>
-                                <div style={{ display: 'flex', alignItems: 'flex-end', fontSize: '0.7rem', width: '100%' }}>
+                                <div style={{ fontSize: '0.7rem', width: '100%', lineHeight: '1.2' }}>
                                   <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>E-way Bill No:</span>
                                   <span style={{ fontWeight: 'bold', fontSize: '0.8rem', marginLeft: '4px' }}>
                                     {formData.ewayBillNo || '\u00A0'}
@@ -1591,7 +1730,7 @@ export default function LrCreator({ loadedLr = null }) {
                             </tr>
                             <tr>
                               <td style={{ width: '30%', borderRight: '1.5px solid #08103A', padding: '6px 8px' }}>
-                                <div style={{ display: 'flex', alignItems: 'flex-end', fontSize: '0.7rem', width: '100%' }}>
+                                <div style={{ fontSize: '0.7rem', width: '100%', lineHeight: '1.2' }}>
                                   <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Invoice No:</span>
                                   <span style={{ fontWeight: 'bold', fontSize: '0.8rem', marginLeft: '4px' }}>
                                     {formData.invoiceNo || '\u00A0'}
@@ -1599,7 +1738,7 @@ export default function LrCreator({ loadedLr = null }) {
                                 </div>
                               </td>
                               <td style={{ width: '30%', borderRight: '1.5px solid #08103A', padding: '6px 8px' }}>
-                                <div style={{ display: 'flex', alignItems: 'flex-end', fontSize: '0.7rem', width: '100%' }}>
+                                <div style={{ fontSize: '0.7rem', width: '100%', lineHeight: '1.2' }}>
                                   <span style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>Value Rs:</span>
                                   <span style={{ fontWeight: 'bold', fontSize: '0.8rem', marginLeft: '4px' }}>
                                     {formData.valueRs || '\u00A0'}
@@ -1617,7 +1756,7 @@ export default function LrCreator({ loadedLr = null }) {
                               {/* Note Box */}
                               <td style={{ width: '30%', borderRight: '3px solid #08103A', padding: '4px 6px', verticalAlign: 'top' }}>
                                 <strong style={{ fontSize: '0.65rem', display: 'block', textAlign: 'left' }}>Note :</strong>
-                                <div style={{ marginTop: '2px', fontSize: '0.58rem', lineHeight: '1.25', textAlign: 'center', fontWeight: 'bold' }}>
+                                <div style={{ marginTop: '12px', fontSize: '0.58rem', lineHeight: '1.25', textAlign: 'center', fontWeight: 'bold' }}>
                                   This Consignment Note is issued under<br />
                                   subject to terms & conditions<br />
                                   Printed overleaf
@@ -1625,7 +1764,7 @@ export default function LrCreator({ loadedLr = null }) {
                               </td>
                               {/* Receiver's Signature Box */}
                               <td style={{ width: '35%', borderRight: '3px solid #08103A', padding: '6px', verticalAlign: 'top', fontSize: '0.65rem' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', minHeight: '80px', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100px', justifyContent: 'space-between' }}>
                                   <div style={{ textAlign: 'center' }}>Received the goods in good condition and order</div>
                                   <div style={{ textAlign: 'center', marginTop: 'auto', paddingTop: '15px' }}>
                                     <div style={{ borderBottom: '1px dotted #08103A', width: '80%', margin: '0 auto 4px' }}></div>
@@ -1635,10 +1774,24 @@ export default function LrCreator({ loadedLr = null }) {
                               </td>
                               {/* Authorised Signature Box */}
                               <td style={{ width: '35%', padding: '6px', verticalAlign: 'top', fontSize: '0.65rem' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', minHeight: '80px', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100px', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
                                   <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
                                     <img src="/Title.png" alt="SREE VAARAHI AMMAN TRANSPORTS" style={{ height: '18px', width: 'auto', objectFit: 'contain' }} />
                                   </div>
+                                  {signatureImage && (
+                                    <img 
+                                      src={signatureImage} 
+                                      alt="Signature" 
+                                      style={{ 
+                                        position: 'absolute', 
+                                        top: '20px', 
+                                        height: '54px', 
+                                        maxWidth: '260px', 
+                                        objectFit: 'contain',
+                                        pointerEvents: 'none'
+                                      }} 
+                                    />
+                                  )}
                                   <div style={{ textAlign: 'center', width: '100%', marginTop: 'auto', paddingTop: '15px' }}>
                                     <div style={{ borderBottom: '1px dotted #08103A', width: '80%', margin: '0 auto 4px' }}></div>
                                     <strong>Authorised Signature</strong>

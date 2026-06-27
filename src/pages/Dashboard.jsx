@@ -417,7 +417,7 @@ export default function Dashboard({ onLogout }) {
       margin:       0.15,
       filename:     filename,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      html2canvas:  { scale: 3.5, useCORS: true, logging: false },
       jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
     
