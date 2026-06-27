@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Printer, Save, Truck, Info } from 'lucide-react';
 
-// Suggestions Dropdown component for Goods Description
+// Suggestions Dropdown component with prefix-first sorting
 const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
+  const lowerQuery = (query || '').toLowerCase();
   const filtered = list.filter(val => 
-    val.toLowerCase().includes((query || '').toLowerCase()) && 
-    val.toLowerCase() !== (query || '').toLowerCase()
-  );
+    val.toLowerCase().includes(lowerQuery) && 
+    val.toLowerCase() !== lowerQuery
+  ).sort((a, b) => {
+    const aLower = a.toLowerCase();
+    const bLower = b.toLowerCase();
+    const aStarts = aLower.startsWith(lowerQuery);
+    const bStarts = bLower.startsWith(lowerQuery);
+    if (aStarts && !bStarts) return -1;
+    if (!aStarts && bStarts) return 1;
+    return a.localeCompare(b);
+  });
 
   useEffect(() => {
     const handleOutsideClick = () => {
@@ -29,7 +38,7 @@ const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
       borderRadius: '6px',
       maxHeight: '150px',
       overflowY: 'auto',
-      zIndex: 50,
+      zIndex: 100,
       listStyle: 'none',
       margin: 0,
       padding: 0,
@@ -57,6 +66,158 @@ const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
         </li>
       ))}
     </ul>
+  );
+};
+
+const AutocompleteInput = ({
+  label,
+  type = 'text',
+  className = 'form-input',
+  placeholder,
+  maxLength,
+  value,
+  onChange,
+  suggestions,
+  onSelectSuggestion,
+  style = {}
+}) => {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="form-group" style={style}>
+      {label && <label className="form-label">{label}</label>}
+      <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+        <input
+          type={type}
+          className={className}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          value={value}
+          onChange={onChange}
+          onFocus={() => setShowSuggestions(true)}
+        />
+        {showSuggestions && (
+          <SuggestionsDropdown
+            query={value}
+            list={suggestions}
+            onSelect={(val) => {
+              onSelectSuggestion(val);
+              setShowSuggestions(false);
+            }}
+            onClose={() => setShowSuggestions(false)}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AutocompleteTextarea = ({
+  label,
+  className = 'form-input',
+  placeholder,
+  rows = 2,
+  value,
+  onChange,
+  suggestions,
+  onSelectSuggestion,
+  style = {}
+}) => {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="form-group" style={style}>
+      {label && <label className="form-label">{label}</label>}
+      <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+        <textarea
+          rows={rows}
+          className={className}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          onFocus={() => setShowSuggestions(true)}
+        />
+        {showSuggestions && (
+          <SuggestionsDropdown
+            query={value}
+            list={suggestions}
+            onSelect={(val) => {
+              onSelectSuggestion(val);
+              setShowSuggestions(false);
+            }}
+            onClose={() => setShowSuggestions(false)}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AutocompleteTableInput = ({
+  value,
+  onChange,
+  suggestions,
+  placeholder,
+  style = {}
+}) => {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+      <input
+        type="text"
+        className="form-input"
+        style={{ width: '100%', padding: '4px', fontSize: '0.8rem', ...style }}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        onFocus={() => setShowSuggestions(true)}
+      />
+      {showSuggestions && (
+        <SuggestionsDropdown
+          query={value}
+          list={suggestions}
+          onSelect={(val) => {
+            onChange({ target: { value: val } });
+            setShowSuggestions(false);
+          }}
+          onClose={() => setShowSuggestions(false)}
+        />
+      )}
+    </div>
   );
 };
 
@@ -108,12 +269,18 @@ const DOTTED_LINE_SVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3d
 const WHATSAPP_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgd2lkdGg9JzExJyBoZWlnaHQ9JzExJz48cGF0aCBmaWxsPScjMDgxMDNBJyBkPSdNMTIuMDEgMi4wMWMtNS41MiAwLTEwIDQuNDgtMTAgMTAgMCAxLjk1LjU2IDMuNzYgMS41MSA1LjI1TDIuMDEgMjJsNC44OS0xLjQ4YzEuNDYuODggMy4xOSAxLjQgNS4wMyAxLjQgNS41MiAwIDEwLTQuNDggMTAtMTBzLTQuNDgtMTAtMTAtMTB6bTUuOCAxNC4xMmMtLjI2Ljc0LTEuNTIgMS40My0yLjEyIDEuNS0uNi4wNy0xLjM5LjItMy45NS0xLjA0LTMuMDktMS40OS01LjA3LTQuNjYtNS4yMy00Ljg4LS4xNS0uMjItMS4yNS0xLjY2LTEuMjUtMy4xNyAwLTEuNTEuNzgtMi4yNSAxLjA1LTIuNTUuMjgtLjMuNi0uMzcuOC0uMzdzLjQuMDEuNTcuMDFjLjE4IDAgLjQyLS4wNy42NS40OS4yMy41Ni43OCAxLjkxLjg1IDIuMDYuMDcuMTUuMTIuMzMuMDIuNTMtLjEuMi0uMTUuMzMtLjMuNS0uMTUuMTgtLjMyLjM5LS40NC41LS4xNS4xNC0uMzEuMjgtLjE0LjU4LjE3LjMgMS41IDIuMTQgMS43NiAyLjQ1LjI3LjMxLjU0LjQuODQuMjYuMy0uMTQuNDgtLjQ4LjctLjcuMTctLjE4LjM1LS4xNS41NS0uMDcuMi4wNyAxLjI1LjU5IDEuNDcuNy4yLjExLjMzLjE3LjM4LjI2LjA1LjEuMDUuNTgtLjIgMS4zMnonLz48L3N2Zz4=';
 const PHONE_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCcgd2lkdGg9JzExJyBoZWlnaHQ9JzExJz48cGF0aCBmaWxsPScjMDgxMDNBJyBkPSdNMjAgMTUuNWMtMS4yIDAtMi40LS4yLTMuNi0uNi0uMy0uMS0uNyAwLTEgLjJsLTIuMiAyLjJjLTIuOC0xLjQtNS4xLTMuOC02LjYtNi42bDIuMi0yLjJjLjMtLjMuNC0uNy4yLTEtLjQtMS4yLS42LTIuNC0uNi0zLjYgMC0uNi0uNS0xLTEtMUg0Yy0uNiAwLTEgLjUtMSAxIDAgOS40IDcuNiAxNyAxNyAxNyAuNiAwIDEtLjUgMS0xdi0zLjVjMC0uNS0uNS0xLTEtMXpNMTkgMTJoMmMwLTQuOC0zLjktOC43LTguNy04Ljd2MmMzLjcgMCA2LjcgMyA2LjcgNi43eicvPjwvc3ZnPg==';
 
-export default function LrCreator() {
+export default function LrCreator({ loadedLr = null }) {
   const [formData, setFormData] = useState(DEFAULT_LR);
+
+  useEffect(() => {
+    if (loadedLr) {
+      setFormData(loadedLr);
+    } else {
+      setFormData(DEFAULT_LR);
+    }
+  }, [loadedLr]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  const [showGoodsSuggestions, setShowGoodsSuggestions] = useState(false);
-  const goodsInputRef = useRef(null);
   
   const previewContainerRef = useRef(null);
   const [previewScale, setPreviewScale] = useState(1);
@@ -162,6 +329,62 @@ export default function LrCreator() {
       "Cone Carton Box"
     ];
   });
+
+  const [savedLrs, setSavedLrs] = useState(() => {
+    return JSON.parse(localStorage.getItem('svat_saved_lrs') || '[]');
+  });
+
+  const getFieldSuggestions = (fieldName) => {
+    const values = savedLrs.map(lr => {
+      if (fieldName.startsWith('charges.')) {
+        const subField = fieldName.split('.')[1];
+        return lr.charges?.[subField];
+      }
+      return lr[fieldName];
+    }).filter(val => val !== undefined && val !== null && val.toString().trim() !== '');
+    
+    return Array.from(new Set(values.map(val => val.toString().trim())));
+  };
+
+  const getFieldSuggestionsForCargo = (fieldName) => {
+    const values = [];
+    savedLrs.forEach(lr => {
+      if (Array.isArray(lr.cargoItems)) {
+        lr.cargoItems.forEach(item => {
+          if (item && item[fieldName] !== undefined && item[fieldName] !== null) {
+            const trimmed = item[fieldName].toString().trim();
+            if (trimmed !== '') {
+              values.push(trimmed);
+            }
+          }
+        });
+      }
+    });
+    return Array.from(new Set(values));
+  };
+
+  const getCargoSuggestions = () => {
+    const values = [];
+    savedLrs.forEach(lr => {
+      if (Array.isArray(lr.cargoItems)) {
+        lr.cargoItems.forEach(item => {
+          if (item && item.goodsDescription) {
+            const trimmed = item.goodsDescription.trim();
+            if (trimmed !== '') {
+              values.push(trimmed);
+            }
+          }
+        });
+      }
+    });
+    // Add default goodsHistory values
+    goodsHistory.forEach(val => {
+      if (val && val.trim() !== '') {
+        values.push(val.trim());
+      }
+    });
+    return Array.from(new Set(values));
+  };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -272,8 +495,9 @@ export default function LrCreator() {
     }
     
     // Save the receipt to a list of saved LRs (optional helper log)
-    const savedLrs = JSON.parse(localStorage.getItem('svat_saved_lrs') || '[]');
+    const currentSavedLrs = JSON.parse(localStorage.getItem('svat_saved_lrs') || '[]');
     const newLrEntry = {
+      ...formData,
       id: formData.lrNo || `LR-${Date.now().toString().slice(-5)}`,
       date: formData.date || new Date().toLocaleDateString('en-IN'),
       consignee: formData.consigneeName,
@@ -284,15 +508,17 @@ export default function LrCreator() {
       to: formData.to
     };
     
-    const index = savedLrs.findIndex(lr => lr.id === newLrEntry.id);
+    const index = currentSavedLrs.findIndex(lr => lr.id === newLrEntry.id);
     if (index > -1) {
-      savedLrs[index] = newLrEntry;
+      currentSavedLrs[index] = newLrEntry;
     } else {
-      savedLrs.unshift(newLrEntry);
+      currentSavedLrs.unshift(newLrEntry);
     }
-    localStorage.setItem('svat_saved_lrs', JSON.stringify(savedLrs));
+    localStorage.setItem('svat_saved_lrs', JSON.stringify(currentSavedLrs));
+    setSavedLrs(currentSavedLrs);
 
     setShowSaveConfirm(false);
+    alert('LR saved successfully to history!');
   };
 
   const handleDownloadPDF = () => {
@@ -540,172 +766,180 @@ export default function LrCreator() {
           {/* Company Header Details */}
           <h4 className="form-section-title">Company Header Details</h4>
           <div className="form-grid-2">
-            <div className="form-group">
-              <label className="form-label">GSTIN</label>
-              <input type="text" className="form-input" maxLength={20} value={formData.companyGstin} onChange={(e) => handleInputChange('companyGstin', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">PAN</label>
-              <input type="text" className="form-input" maxLength={10} value={formData.companyPan} onChange={(e) => handleInputChange('companyPan', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">UDYAM</label>
-              <input type="text" className="form-input" maxLength={25} value={formData.companyUdyam} onChange={(e) => handleInputChange('companyUdyam', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">ISO Certificate</label>
-              <input type="text" className="form-input" maxLength={20} value={formData.companyIso} onChange={(e) => handleInputChange('companyIso', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">WhatsApp Number</label>
-              <input type="text" className="form-input" maxLength={15} value={formData.companyPhone1} onChange={(e) => handleInputChange('companyPhone1', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Phone Number</label>
-              <input type="text" className="form-input" maxLength={15} value={formData.companyPhone2} onChange={(e) => handleInputChange('companyPhone2', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Email</label>
-              <input type="text" className="form-input" maxLength={50} value={formData.companyEmail} onChange={(e) => handleInputChange('companyEmail', e.target.value)} />
-            </div>
+            <AutocompleteInput
+              label="GSTIN"
+              maxLength={20}
+              value={formData.companyGstin}
+              onChange={(e) => handleInputChange('companyGstin', e.target.value)}
+              suggestions={getFieldSuggestions('companyGstin')}
+              onSelectSuggestion={(val) => handleInputChange('companyGstin', val)}
+            />
+            <AutocompleteInput
+              label="PAN"
+              maxLength={10}
+              value={formData.companyPan}
+              onChange={(e) => handleInputChange('companyPan', e.target.value)}
+              suggestions={getFieldSuggestions('companyPan')}
+              onSelectSuggestion={(val) => handleInputChange('companyPan', val)}
+            />
+            <AutocompleteInput
+              label="UDYAM"
+              maxLength={25}
+              value={formData.companyUdyam}
+              onChange={(e) => handleInputChange('companyUdyam', e.target.value)}
+              suggestions={getFieldSuggestions('companyUdyam')}
+              onSelectSuggestion={(val) => handleInputChange('companyUdyam', val)}
+            />
+            <AutocompleteInput
+              label="ISO Certificate"
+              maxLength={20}
+              value={formData.companyIso}
+              onChange={(e) => handleInputChange('companyIso', e.target.value)}
+              suggestions={getFieldSuggestions('companyIso')}
+              onSelectSuggestion={(val) => handleInputChange('companyIso', val)}
+            />
+            <AutocompleteInput
+              label="WhatsApp Number"
+              maxLength={15}
+              value={formData.companyPhone1}
+              onChange={(e) => handleInputChange('companyPhone1', e.target.value)}
+              suggestions={getFieldSuggestions('companyPhone1')}
+              onSelectSuggestion={(val) => handleInputChange('companyPhone1', val)}
+            />
+            <AutocompleteInput
+              label="Phone Number"
+              maxLength={15}
+              value={formData.companyPhone2}
+              onChange={(e) => handleInputChange('companyPhone2', e.target.value)}
+              suggestions={getFieldSuggestions('companyPhone2')}
+              onSelectSuggestion={(val) => handleInputChange('companyPhone2', val)}
+            />
+            <AutocompleteInput
+              label="Email"
+              maxLength={50}
+              value={formData.companyEmail}
+              onChange={(e) => handleInputChange('companyEmail', e.target.value)}
+              suggestions={getFieldSuggestions('companyEmail')}
+              onSelectSuggestion={(val) => handleInputChange('companyEmail', val)}
+            />
           </div>
 
           {/* Lorry Receipt Basic Specs */}
           <h4 className="form-section-title">Consignment Basic Details</h4>
           <div className="form-grid-2">
-            <div className="form-group">
-              <label className="form-label">Consignment Note No. (LR No)</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 159"
-                maxLength={10}
-                value={formData.lrNo}
-                onChange={(e) => handleInputChange('lrNo', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Date</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 18/06/26"
-                maxLength={12}
-                value={formData.date}
-                onChange={(e) => handleInputChange('date', e.target.value)}
-              />
-            </div>
+            <AutocompleteInput
+              label="Consignment Note No. (LR No)"
+              placeholder="e.g. 159"
+              maxLength={10}
+              value={formData.lrNo}
+              onChange={(e) => handleInputChange('lrNo', e.target.value)}
+              suggestions={getFieldSuggestions('lrNo')}
+              onSelectSuggestion={(val) => handleInputChange('lrNo', val)}
+            />
+            <AutocompleteInput
+              label="Date"
+              placeholder="e.g. 18/06/26"
+              maxLength={12}
+              value={formData.date}
+              onChange={(e) => handleInputChange('date', e.target.value)}
+              suggestions={getFieldSuggestions('date')}
+              onSelectSuggestion={(val) => handleInputChange('date', val)}
+            />
           </div>
 
           <div className="form-grid-2">
-            <div className="form-group">
-              <label className="form-label">From (Source)</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. Pollachi"
-                maxLength={25}
-                value={formData.from}
-                onChange={(e) => handleInputChange('from', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">To (Destination)</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. Chennai"
-                maxLength={25}
-                value={formData.to}
-                onChange={(e) => handleInputChange('to', e.target.value)}
-              />
-            </div>
+            <AutocompleteInput
+              label="From (Source)"
+              placeholder="e.g. Pollachi"
+              maxLength={25}
+              value={formData.from}
+              onChange={(e) => handleInputChange('from', e.target.value)}
+              suggestions={getFieldSuggestions('from')}
+              onSelectSuggestion={(val) => handleInputChange('from', val)}
+            />
+            <AutocompleteInput
+              label="To (Destination)"
+              placeholder="e.g. Chennai"
+              maxLength={25}
+              value={formData.to}
+              onChange={(e) => handleInputChange('to', e.target.value)}
+              suggestions={getFieldSuggestions('to')}
+              onSelectSuggestion={(val) => handleInputChange('to', val)}
+            />
           </div>
 
           {/* Consignor Details */}
           <h4 className="form-section-title">Consignor details (Shipper)</h4>
-          <div className="form-group">
-            <label className="form-label">Consignor Name</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="e.g. Umesh Pencil Processors Pvt Ltd"
-              maxLength={45}
-              value={formData.consignorName}
-              onChange={(e) => handleInputChange('consignorName', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Consignor Address</label>
-            <textarea 
-              rows={2} 
-              className="form-input" 
-              placeholder="e.g. Pollachi"
-              value={formData.consignorAddress}
-              onChange={(e) => handleInputChange('consignorAddress', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Consignor GSTIN</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="GSTIN"
-              maxLength={20}
-              value={formData.consignorGst}
-              onChange={(e) => handleInputChange('consignorGst', e.target.value)}
-            />
-          </div>
+          <AutocompleteInput
+            label="Consignor Name"
+            placeholder="e.g. Umesh Pencil Processors Pvt Ltd"
+            maxLength={45}
+            value={formData.consignorName}
+            onChange={(e) => handleInputChange('consignorName', e.target.value)}
+            suggestions={getFieldSuggestions('consignorName')}
+            onSelectSuggestion={(val) => handleInputChange('consignorName', val)}
+          />
+          <AutocompleteTextarea
+            label="Consignor Address"
+            placeholder="e.g. Pollachi"
+            rows={2}
+            value={formData.consignorAddress}
+            onChange={(e) => handleInputChange('consignorAddress', e.target.value)}
+            suggestions={getFieldSuggestions('consignorAddress')}
+            onSelectSuggestion={(val) => handleInputChange('consignorAddress', val)}
+          />
+          <AutocompleteInput
+            label="Consignor GSTIN"
+            placeholder="GSTIN"
+            maxLength={20}
+            value={formData.consignorGst}
+            onChange={(e) => handleInputChange('consignorGst', e.target.value)}
+            suggestions={getFieldSuggestions('consignorGst')}
+            onSelectSuggestion={(val) => handleInputChange('consignorGst', val)}
+          />
 
           {/* Consignee Details */}
           <h4 className="form-section-title">Consignee details (Receiver)</h4>
-          <div className="form-group">
-            <label className="form-label">Consignee Name</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="e.g. Hindustan Pencils Pvt. Ltd."
-              maxLength={45}
-              value={formData.consigneeName}
-              onChange={(e) => handleInputChange('consigneeName', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Consignee Address</label>
-            <textarea 
-              rows={2} 
-              className="form-input" 
-              placeholder="e.g. Alwaye, Ernakulam"
-              value={formData.consigneeAddress}
-              onChange={(e) => handleInputChange('consigneeAddress', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Consignee GSTIN</label>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="GSTIN"
-              maxLength={20}
-              value={formData.consigneeGst}
-              onChange={(e) => handleInputChange('consigneeGst', e.target.value)}
-            />
-          </div>
+          <AutocompleteInput
+            label="Consignee Name"
+            placeholder="e.g. Hindustan Pencils Pvt. Ltd."
+            maxLength={45}
+            value={formData.consigneeName}
+            onChange={(e) => handleInputChange('consigneeName', e.target.value)}
+            suggestions={getFieldSuggestions('consigneeName')}
+            onSelectSuggestion={(val) => handleInputChange('consigneeName', val)}
+          />
+          <AutocompleteTextarea
+            label="Consignee Address"
+            placeholder="e.g. Alwaye, Ernakulam"
+            rows={2}
+            value={formData.consigneeAddress}
+            onChange={(e) => handleInputChange('consigneeAddress', e.target.value)}
+            suggestions={getFieldSuggestions('consigneeAddress')}
+            onSelectSuggestion={(val) => handleInputChange('consigneeAddress', val)}
+          />
+          <AutocompleteInput
+            label="Consignee GSTIN"
+            placeholder="GSTIN"
+            maxLength={20}
+            value={formData.consigneeGst}
+            onChange={(e) => handleInputChange('consigneeGst', e.target.value)}
+            suggestions={getFieldSuggestions('consigneeGst')}
+            onSelectSuggestion={(val) => handleInputChange('consigneeGst', val)}
+          />
 
           {/* Transit Details */}
           <h4 className="form-section-title">Transit & Payment Details</h4>
           <div className="form-grid-2">
-            <div className="form-group">
-              <label className="form-label">Truck Number</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. TN 72 AT 9459"
-                maxLength={15}
-                value={formData.truckNo}
-                onChange={(e) => handleInputChange('truckNo', e.target.value)}
-              />
-            </div>
+            <AutocompleteInput
+              label="Truck Number"
+              placeholder="e.g. TN 72 AT 9459"
+              maxLength={15}
+              value={formData.truckNo}
+              onChange={(e) => handleInputChange('truckNo', e.target.value)}
+              suggestions={getFieldSuggestions('truckNo')}
+              onSelectSuggestion={(val) => handleInputChange('truckNo', val)}
+            />
             <div className="form-group">
               <label className="form-label">Payment Mode</label>
               <select 
@@ -736,43 +970,35 @@ export default function LrCreator() {
               {(formData.cargoItems || []).map((item, idx) => (
                 <tr key={idx}>
                   <td>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      style={{ width: '100%', padding: '4px', fontSize: '0.8rem' }}
+                    <AutocompleteTableInput
                       placeholder="e.g. 100"
                       value={item.noOfPackages}
                       onChange={(e) => handleCargoItemChange(idx, 'noOfPackages', e.target.value)}
+                      suggestions={getFieldSuggestionsForCargo('noOfPackages')}
                     />
                   </td>
                   <td>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      style={{ width: '100%', padding: '4px', fontSize: '0.8rem' }}
+                    <AutocompleteTableInput
                       placeholder="e.g. Cotton Box"
                       value={item.goodsDescription}
                       onChange={(e) => handleCargoItemChange(idx, 'goodsDescription', e.target.value)}
+                      suggestions={getCargoSuggestions()}
                     />
                   </td>
                   <td>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      style={{ width: '100%', padding: '4px', fontSize: '0.8rem' }}
+                    <AutocompleteTableInput
                       placeholder="Kgs"
                       value={item.actualWeight}
                       onChange={(e) => handleCargoItemChange(idx, 'actualWeight', e.target.value)}
+                      suggestions={getFieldSuggestionsForCargo('actualWeight')}
                     />
                   </td>
                   <td>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      style={{ width: '100%', padding: '4px', fontSize: '0.8rem' }}
+                    <AutocompleteTableInput
                       placeholder="Kgs"
                       value={item.chargedWeight}
                       onChange={(e) => handleCargoItemChange(idx, 'chargedWeight', e.target.value)}
+                      suggestions={getFieldSuggestionsForCargo('chargedWeight')}
                     />
                   </td>
                   <td>
@@ -802,152 +1028,128 @@ export default function LrCreator() {
           {/* Tracking & references */}
           <h4 className="form-section-title">References & Marks</h4>
           <div className="form-grid-2">
-            <div className="form-group">
-              <label className="form-label">E-way Bill No.</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 331245678912"
-                maxLength={12}
-                value={formData.ewayBillNo}
-                onChange={(e) => handleInputChange('ewayBillNo', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Private Marks</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. Seal No. - 274740"
-                maxLength={30}
-                value={formData.privateMarks}
-                onChange={(e) => handleInputChange('privateMarks', e.target.value)}
-              />
-            </div>
+            <AutocompleteInput
+              label="E-way Bill No."
+              placeholder="e.g. 331245678912"
+              maxLength={12}
+              value={formData.ewayBillNo}
+              onChange={(e) => handleInputChange('ewayBillNo', e.target.value)}
+              suggestions={getFieldSuggestions('ewayBillNo')}
+              onSelectSuggestion={(val) => handleInputChange('ewayBillNo', val)}
+            />
+            <AutocompleteInput
+              label="Private Marks"
+              placeholder="e.g. Seal No. - 274740"
+              maxLength={30}
+              value={formData.privateMarks}
+              onChange={(e) => handleInputChange('privateMarks', e.target.value)}
+              suggestions={getFieldSuggestions('privateMarks')}
+              onSelectSuggestion={(val) => handleInputChange('privateMarks', val)}
+            />
           </div>
- 
+
           <div className="form-grid-2">
-            <div className="form-group">
-              <label className="form-label">Invoice No.</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="Seller Invoice No"
-                maxLength={20}
-                value={formData.invoiceNo}
-                onChange={(e) => handleInputChange('invoiceNo', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Value Rs.</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="Cargo Value"
-                maxLength={12}
-                value={formData.valueRs}
-                onChange={(e) => handleInputChange('valueRs', e.target.value)}
-              />
-            </div>
+            <AutocompleteInput
+              label="Invoice No."
+              placeholder="Seller Invoice No"
+              maxLength={20}
+              value={formData.invoiceNo}
+              onChange={(e) => handleInputChange('invoiceNo', e.target.value)}
+              suggestions={getFieldSuggestions('invoiceNo')}
+              onSelectSuggestion={(val) => handleInputChange('invoiceNo', val)}
+            />
+            <AutocompleteInput
+              label="Value Rs."
+              placeholder="Cargo Value"
+              maxLength={12}
+              value={formData.valueRs}
+              onChange={(e) => handleInputChange('valueRs', e.target.value)}
+              suggestions={getFieldSuggestions('valueRs')}
+              onSelectSuggestion={(val) => handleInputChange('valueRs', val)}
+            />
           </div>
  
           {/* Charges panel */}
           <h4 className="form-section-title">Lorry Freight & Charges Breakdown</h4>
           <div className="form-grid-3">
-            <div className="form-group">
-              <label className="form-label">Freight Amount (Total)</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 9111"
-                maxLength={8}
-                value={formData.charges.freightAmount}
-                onChange={(e) => handleChargeChange('freightAmount', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Hamali Charges</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 100"
-                maxLength={8}
-                value={formData.charges.hamali}
-                onChange={(e) => handleChargeChange('hamali', e.target.value)}
-              />
-            </div>
+            <AutocompleteInput
+              label="Freight Amount (Total)"
+              placeholder="e.g. 9111"
+              maxLength={8}
+              value={formData.charges.freightAmount}
+              onChange={(e) => handleChargeChange('freightAmount', e.target.value)}
+              suggestions={getFieldSuggestions('charges.freightAmount')}
+              onSelectSuggestion={(val) => handleChargeChange('freightAmount', val)}
+            />
+            <AutocompleteInput
+              label="Hamali Charges"
+              placeholder="e.g. 100"
+              maxLength={8}
+              value={formData.charges.hamali}
+              onChange={(e) => handleChargeChange('hamali', e.target.value)}
+              suggestions={getFieldSuggestions('charges.hamali')}
+              onSelectSuggestion={(val) => handleChargeChange('hamali', val)}
+            />
           </div>
- 
+
           <div className="form-grid-3">
-            <div className="form-group">
-              <label className="form-label">Door Pick-up</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 200"
-                maxLength={8}
-                value={formData.charges.doorPickup}
-                onChange={(e) => handleChargeChange('doorPickup', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Door Delivery</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 200"
-                maxLength={8}
-                value={formData.charges.doorDelivery}
-                onChange={(e) => handleChargeChange('doorDelivery', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Statistical Charges</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 80"
-                maxLength={8}
-                value={formData.charges.statistical}
-                onChange={(e) => handleChargeChange('statistical', e.target.value)}
-              />
-            </div>
+            <AutocompleteInput
+              label="Door Pick-up"
+              placeholder="e.g. 200"
+              maxLength={8}
+              value={formData.charges.doorPickup}
+              onChange={(e) => handleChargeChange('doorPickup', e.target.value)}
+              suggestions={getFieldSuggestions('charges.doorPickup')}
+              onSelectSuggestion={(val) => handleChargeChange('doorPickup', val)}
+            />
+            <AutocompleteInput
+              label="Door Delivery"
+              placeholder="e.g. 200"
+              maxLength={8}
+              value={formData.charges.doorDelivery}
+              onChange={(e) => handleChargeChange('doorDelivery', e.target.value)}
+              suggestions={getFieldSuggestions('charges.doorDelivery')}
+              onSelectSuggestion={(val) => handleChargeChange('doorDelivery', val)}
+            />
+            <AutocompleteInput
+              label="Statistical Charges"
+              placeholder="e.g. 80"
+              maxLength={8}
+              value={formData.charges.statistical}
+              onChange={(e) => handleChargeChange('statistical', e.target.value)}
+              suggestions={getFieldSuggestions('charges.statistical')}
+              onSelectSuggestion={(val) => handleChargeChange('statistical', val)}
+            />
           </div>
- 
+
           <div className="form-grid-3">
-            <div className="form-group">
-              <label className="form-label">A.O.C</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 50"
-                maxLength={8}
-                value={formData.charges.aoc}
-                onChange={(e) => handleChargeChange('aoc', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">F.O.C</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 50"
-                maxLength={8}
-                value={formData.charges.foc}
-                onChange={(e) => handleChargeChange('foc', e.target.value)}
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Others</label>
-              <input 
-                type="text" 
-                className="form-input" 
-                placeholder="e.g. 100"
-                maxLength={8}
-                value={formData.charges.others}
-                onChange={(e) => handleChargeChange('others', e.target.value)}
-              />
-            </div>
+            <AutocompleteInput
+              label="A.O.C"
+              placeholder="e.g. 50"
+              maxLength={8}
+              value={formData.charges.aoc}
+              onChange={(e) => handleChargeChange('aoc', e.target.value)}
+              suggestions={getFieldSuggestions('charges.aoc')}
+              onSelectSuggestion={(val) => handleChargeChange('aoc', val)}
+            />
+            <AutocompleteInput
+              label="F.O.C"
+              placeholder="e.g. 50"
+              maxLength={8}
+              value={formData.charges.foc}
+              onChange={(e) => handleChargeChange('foc', e.target.value)}
+              suggestions={getFieldSuggestions('charges.foc')}
+              onSelectSuggestion={(val) => handleChargeChange('foc', val)}
+            />
+            <AutocompleteInput
+              label="Others"
+              placeholder="e.g. 100"
+              maxLength={8}
+              value={formData.charges.others}
+              onChange={(e) => handleChargeChange('others', e.target.value)}
+              suggestions={getFieldSuggestions('charges.others')}
+              onSelectSuggestion={(val) => handleChargeChange('others', val)}
+            />
           </div>
 
           <div className="form-grid-2">

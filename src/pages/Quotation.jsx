@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
 
-const Quotation = ({ type = 'export' }) => {
+const Quotation = ({ type = 'export', loadedData = null }) => {
   const [deliveryCharges, setDeliveryCharges] = useState({
     mumbaiCbm: '',
     mumbaiFabric: '',
@@ -22,6 +22,59 @@ const Quotation = ({ type = 'export' }) => {
     const newRates = [...domesticRates];
     newRates[index] = value;
     setDomesticRates(newRates);
+  };
+
+  useEffect(() => {
+    if (loadedData && loadedData.data) {
+      if (loadedData.type === 'export' && loadedData.data.deliveryCharges) {
+        setDeliveryCharges(loadedData.data.deliveryCharges);
+      } else if (loadedData.type === 'domestic') {
+        if (loadedData.data.domesticLocation) setDomesticLocation(loadedData.data.domesticLocation);
+        if (loadedData.data.domesticRates) setDomesticRates(loadedData.data.domesticRates);
+      }
+    } else {
+      setDeliveryCharges({
+        mumbaiCbm: '',
+        mumbaiFabric: '',
+        tuticorin: '',
+        chennaiSea: '',
+        chennaiAir: '',
+        bangaloreAir: ''
+      });
+      setDomesticLocation({
+        from: 'Tirupur',
+        to: 'Mumbai'
+      });
+      setDomesticRates(['', '', '', '', '', '', '']);
+    }
+  }, [loadedData, type]);
+
+  const handleSaveQuotation = () => {
+    const savedQuotes = JSON.parse(localStorage.getItem('svat_saved_quotations') || '[]');
+    const quoteId = loadedData && loadedData.id ? loadedData.id : `QO-${Date.now().toString().slice(-5)}`;
+    
+    const newQuote = {
+      id: quoteId,
+      type: type,
+      from: type === 'domestic' ? domesticLocation.from : 'Tirupur',
+      to: type === 'domestic' ? domesticLocation.to : 'Multiple (Export)',
+      date: loadedData && loadedData.date ? loadedData.date : new Date().toLocaleDateString('en-IN'),
+      data: {
+        deliveryCharges,
+        domesticLocation,
+        domesticRates
+      }
+    };
+
+    const index = savedQuotes.findIndex(q => q.id === quoteId);
+    if (index > -1) {
+      savedQuotes[index] = newQuote;
+    } else {
+      savedQuotes.unshift(newQuote);
+    }
+    
+    localStorage.setItem('svat_saved_quotations', JSON.stringify(savedQuotes));
+    alert('Quotation saved successfully to history!');
   };
 
   const handleDownloadPDF = (contentId, filename) => {
@@ -280,8 +333,31 @@ const Quotation = ({ type = 'export' }) => {
         </div>
       </div>
       
-      {/* Download Button Container */}
-      <div style={{ marginTop: '20px', marginBottom: '40px' }}>
+      {/* Download/Save Buttons Container */}
+      <div style={{ display: 'flex', gap: '15px', marginTop: '20px', marginBottom: '40px' }}>
+        <button 
+          onClick={handleSaveQuotation}
+          style={{ 
+            backgroundColor: '#28A745', 
+            color: 'white', 
+            border: 'none', 
+            padding: '12px 24px', 
+            borderRadius: '6px', 
+            cursor: 'pointer',
+            fontSize: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontWeight: 'bold',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            transition: 'background-color 0.2s'
+          }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28A745'}
+        >
+          <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>✓</span>
+          Save Quotation
+        </button>
         <button 
           onClick={() => handleDownloadPDF('quotation-content', 'SVAT_Rate_Quotation.pdf')} 
           style={{ 
@@ -399,7 +475,30 @@ const Quotation = ({ type = 'export' }) => {
             </div>
           </div>
           
-          <div style={{ marginTop: '20px', marginBottom: '40px' }}>
+          <div style={{ display: 'flex', gap: '15px', marginTop: '20px', marginBottom: '40px' }}>
+            <button 
+              onClick={handleSaveQuotation}
+              style={{ 
+                backgroundColor: '#28A745', 
+                color: 'white', 
+                border: 'none', 
+                padding: '12px 24px', 
+                borderRadius: '6px', 
+                cursor: 'pointer',
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28A745'}
+            >
+              <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>✓</span>
+              Save Quotation
+            </button>
             <button 
               onClick={() => handleDownloadPDF('domestic-quotation-content', 'SVAT_Domestic_Quotation.pdf')} 
               style={{ 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, FileText, History, LogOut, Plus, Trash2, Printer, Save, DollarSign, Calendar, TrendingUp, Truck } from 'lucide-react';
 import LrCreator from './LrCreator';
+import Quotation from './Quotation';
 
 // Custom SVG Logo for SVAT matching the red crescent-shaped truck logo with TM trademark
 const SVATLogo = () => (
@@ -159,23 +160,63 @@ const DEFAULT_INVOICE = {
 
 export default function Dashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState('creator');
+  const [isQuotationMenuOpen, setIsQuotationMenuOpen] = useState(false);
   const [formData, setFormData] = useState(DEFAULT_INVOICE);
-  const [invoices, setInvoices] = useState([
-    {
-      id: 'SVAT/DN/26-27/13',
-      consignee: 'NEW SABARI SASTHA SHIPPING SERVICES',
-      date: '30-April-26',
-      amount: 62000,
-      status: 'paid'
-    },
-    {
-      id: 'SVAT/DN/26-27/12',
-      consignee: 'NEW SABARI SASTHA SHIPPING SERVICES',
-      date: '15-April-26',
-      amount: 45000,
-      status: 'paid'
+  const [loadedLr, setLoadedLr] = useState(null);
+  const [loadedQuotation, setLoadedQuotation] = useState(null);
+  const [historySubTab, setHistorySubTab] = useState('dn');
+
+  const [invoices, setInvoices] = useState(() => {
+    const saved = localStorage.getItem('svat_saved_invoices');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: 'SVAT/DN/26-27/13',
+        consignee: 'NEW SABARI SASTHA SHIPPING SERVICES',
+        date: '30-April-26',
+        amount: 62000,
+        status: 'paid'
+      },
+      {
+        id: 'SVAT/DN/26-27/12',
+        consignee: 'NEW SABARI SASTHA SHIPPING SERVICES',
+        date: '15-April-26',
+        amount: 45000,
+        status: 'paid'
+      }
+    ];
+  });
+
+  const [savedLrs, setSavedLrs] = useState(() => {
+    return JSON.parse(localStorage.getItem('svat_saved_lrs') || '[]');
+  });
+
+  const [savedQuotations, setSavedQuotations] = useState(() => {
+    return JSON.parse(localStorage.getItem('svat_saved_quotations') || '[]');
+  });
+
+  useEffect(() => {
+    if (activeTab === 'history') {
+      setSavedLrs(JSON.parse(localStorage.getItem('svat_saved_lrs') || '[]'));
+      setSavedQuotations(JSON.parse(localStorage.getItem('svat_saved_quotations') || '[]'));
     }
-  ]);
+  }, [activeTab]);
+
+  const handleTabChange = (tabName) => {
+    setActiveTab(tabName);
+    if (!tabName.startsWith('quotation')) setLoadedQuotation(null);
+    if (tabName !== 'lr') setLoadedLr(null);
+  };
+
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, type: '', id: null });
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const triggerToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
 
   const [subtotal, setSubtotal] = useState(0);
   const [cgstAmount, setCgstAmount] = useState(0);
@@ -330,6 +371,7 @@ export default function Dashboard({ onLogout }) {
 
   const handleSaveInvoice = () => {
     const newInvoiceObj = {
+      ...formData,
       id: formData.debitNoteNo || `DN-${Date.now().toString().slice(-5)}`,
       consignee: formData.consigneeName,
       date: formData.date,
@@ -337,11 +379,14 @@ export default function Dashboard({ onLogout }) {
       status: 'pending'
     };
     
+    let updated;
     if (invoices.some(inv => inv.id === newInvoiceObj.id)) {
-      setInvoices(prev => prev.map(inv => inv.id === newInvoiceObj.id ? newInvoiceObj : inv));
+      updated = invoices.map(inv => inv.id === newInvoiceObj.id ? newInvoiceObj : inv);
     } else {
-      setInvoices(prev => [newInvoiceObj, ...prev]);
+      updated = [newInvoiceObj, ...invoices];
     }
+    setInvoices(updated);
+    localStorage.setItem('svat_saved_invoices', JSON.stringify(updated));
 
     // Save newly entered particulars to suggestion list auto-complete
     const updatedSuggestions = [...suggestions];
@@ -358,7 +403,7 @@ export default function Dashboard({ onLogout }) {
       localStorage.setItem('svat_particulars_suggestions', JSON.stringify(updatedSuggestions));
     }
 
-    alert('Invoice saved successfully to history!');
+    triggerToast('Invoice saved successfully!');
   };
 
   const handleDownloadPDF = () => {
@@ -380,18 +425,32 @@ export default function Dashboard({ onLogout }) {
   };
 
   const handleLoadInvoice = (historyItem) => {
-    setFormData(prev => ({
-      ...prev,
-      debitNoteNo: historyItem.id,
-      date: historyItem.date,
-      items: [
-        { particulars: 'VEHICLE HIRING CHARGES', quantity: '', rate: '', per: '', amount: historyItem.amount }
-      ],
-      roundOff: '',
-      gstCategory: 'exempted',
-      wordsOverride: ''
-    }));
+    setFormData({
+      ...DEFAULT_INVOICE,
+      ...historyItem
+    });
     setActiveTab('creator');
+  };
+
+  const confirmDelete = () => {
+    const { type, id } = deleteConfirm;
+    if (type === 'dn') {
+      const updated = invoices.filter(inv => inv.id !== id);
+      setInvoices(updated);
+      localStorage.setItem('svat_saved_invoices', JSON.stringify(updated));
+      triggerToast('Invoice deleted successfully!');
+    } else if (type === 'lr') {
+      const updated = savedLrs.filter(lr => lr.id !== id);
+      setSavedLrs(updated);
+      localStorage.setItem('svat_saved_lrs', JSON.stringify(updated));
+      triggerToast('Lorry Receipt deleted successfully!');
+    } else if (type === 'quote') {
+      const updated = savedQuotations.filter(q => q.id !== id);
+      setSavedQuotations(updated);
+      localStorage.setItem('svat_saved_quotations', JSON.stringify(updated));
+      triggerToast('Quotation deleted successfully!');
+    }
+    setDeleteConfirm({ show: false, type: '', id: null });
   };
 
   // Determine Title based on GST tax category
@@ -425,7 +484,7 @@ export default function Dashboard({ onLogout }) {
             <li className="sidebar-item">
               <button 
                 className={`sidebar-link ${activeTab === 'overview' ? 'active' : ''}`}
-                onClick={() => setActiveTab('overview')}
+                onClick={() => handleTabChange('overview')}
               >
                 <LayoutDashboard className="sidebar-icon" />
                 Overview
@@ -434,7 +493,7 @@ export default function Dashboard({ onLogout }) {
             <li className="sidebar-item">
               <button 
                 className={`sidebar-link ${activeTab === 'creator' ? 'active' : ''}`}
-                onClick={() => setActiveTab('creator')}
+                onClick={() => handleTabChange('creator')}
               >
                 <FileText className="sidebar-icon" />
                 Invoice Creator
@@ -443,19 +502,51 @@ export default function Dashboard({ onLogout }) {
             <li className="sidebar-item">
               <button 
                 className={`sidebar-link ${activeTab === 'lr' ? 'active' : ''}`}
-                onClick={() => setActiveTab('lr')}
+                onClick={() => handleTabChange('lr')}
               >
                 <Truck className="sidebar-icon" />
                 LR Creator
               </button>
             </li>
+            <li className="sidebar-item" style={{ flexDirection: 'column', alignItems: 'flex-start', padding: 0 }}>
+              <button 
+                className={`sidebar-link ${activeTab.startsWith('quotation') ? 'active' : ''}`}
+                onClick={() => setIsQuotationMenuOpen(!isQuotationMenuOpen)}
+                style={{ width: '100%', justifyContent: 'space-between', display: 'flex', padding: '0.75rem 1rem' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <FileText className="sidebar-icon" />
+                  Quotation
+                </div>
+                <span style={{ fontSize: '0.75rem' }}>{isQuotationMenuOpen ? '▼' : '▶'}</span>
+              </button>
+              
+              {isQuotationMenuOpen && (
+                <div style={{ paddingLeft: '2.5rem', display: 'flex', flexDirection: 'column', width: '100%', marginTop: '0.25rem' }}>
+                  <button 
+                    className={`sidebar-link ${activeTab === 'quotation-export' ? 'active' : ''}`}
+                    onClick={() => handleTabChange('quotation-export')}
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', width: '100%', justifyContent: 'flex-start', backgroundColor: 'transparent', color: activeTab === 'quotation-export' ? '#E53935' : 'var(--text-secondary)' }}
+                  >
+                    Export
+                  </button>
+                  <button 
+                    className={`sidebar-link ${activeTab === 'quotation-domestic' ? 'active' : ''}`}
+                    onClick={() => handleTabChange('quotation-domestic')}
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', width: '100%', justifyContent: 'flex-start', backgroundColor: 'transparent', color: activeTab === 'quotation-domestic' ? '#E53935' : 'var(--text-secondary)' }}
+                  >
+                    Domestic
+                  </button>
+                </div>
+              )}
+            </li>
             <li className="sidebar-item">
               <button 
                 className={`sidebar-link ${activeTab === 'history' ? 'active' : ''}`}
-                onClick={() => setActiveTab('history')}
+                onClick={() => handleTabChange('history')}
               >
                 <History className="sidebar-icon" />
-                Invoice History
+                History Registry
               </button>
             </li>
           </nav>
@@ -469,7 +560,7 @@ export default function Dashboard({ onLogout }) {
               <p className="user-role">Billing Manager</p>
             </div>
           </div>
-          <button onClick={onLogout} className="btn-logout" title="Sign Out">
+          <button onClick={() => setShowLogoutConfirm(true)} className="btn-logout" title="Sign Out">
             <LogOut size={20} />
           </button>
         </div>
@@ -477,6 +568,12 @@ export default function Dashboard({ onLogout }) {
 
       {/* Main Panel Content */}
       <main className="dashboard-content">
+        {/* Quotation Tab */}
+        {activeTab.startsWith('quotation') && (
+          <div style={{ padding: '20px', display: 'flex', justifyContent: 'center' }}>
+            <Quotation type={activeTab === 'quotation-export' ? 'export' : 'domestic'} loadedData={loadedQuotation} triggerToast={triggerToast} />
+          </div>
+        )}
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div>
@@ -485,6 +582,7 @@ export default function Dashboard({ onLogout }) {
             </div>
             
             <div className="overview-grid">
+              {/* Card 1: Total Invoiced */}
               <div className="overview-card">
                 <div className="overview-card-info">
                   <p className="overview-card-label">Total Invoiced</p>
@@ -495,6 +593,7 @@ export default function Dashboard({ onLogout }) {
                 </div>
               </div>
               
+              {/* Card 2: Invoices Count */}
               <div className="overview-card">
                 <div className="overview-card-info">
                   <p className="overview-card-label">Invoices Count</p>
@@ -505,25 +604,43 @@ export default function Dashboard({ onLogout }) {
                 </div>
               </div>
 
+              {/* Card 3: Lorry Receipts Count */}
               <div className="overview-card">
                 <div className="overview-card-info">
-                  <p className="overview-card-label">System Status</p>
-                  <p className="overview-card-value" style={{ color: '#4ADE80', fontSize: '1.25rem' }}>Active</p>
+                  <p className="overview-card-label">Lorry Receipts</p>
+                  <p className="overview-card-value">{savedLrs.length}</p>
                 </div>
                 <div className="overview-card-icon">
-                  <TrendingUp size={24} />
+                  <Truck size={24} />
+                </div>
+              </div>
+
+              {/* Card 4: Quotations Count */}
+              <div className="overview-card">
+                <div className="overview-card-info">
+                  <p className="overview-card-label">Quotations Count</p>
+                  <p className="overview-card-value">{savedQuotations.length}</p>
+                </div>
+                <div className="overview-card-icon">
+                  <FileText size={24} />
                 </div>
               </div>
             </div>
 
             <div style={{ textAlign: 'left', backgroundColor: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <h3 style={{ marginBottom: '1.5rem', fontWeight: 700 }}>Quick Actions</h3>
+              <h3 style={{ marginBottom: '1.5rem', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.5px' }}>Quick Actions</h3>
               <div className="quick-actions-row">
                 <button className="btn-primary" onClick={() => { handleClearForm(); setActiveTab('creator'); }}>
-                  Create New Invoice
+                  <Plus size={18} /> Create Invoice
+                </button>
+                <button className="btn-primary" onClick={() => { setLoadedLr(null); setActiveTab('lr'); }}>
+                  <Plus size={18} /> Create Lorry Receipt (LR)
+                </button>
+                <button className="btn-primary" onClick={() => { setLoadedQuotation(null); setActiveTab('quotation-export'); }}>
+                  <Plus size={18} /> Create Quotation
                 </button>
                 <button className="btn-outline" onClick={() => setActiveTab('history')}>
-                  View Invoices List
+                  <History size={18} /> View History
                 </button>
               </div>
             </div>
@@ -1318,34 +1435,173 @@ export default function Dashboard({ onLogout }) {
 
         {/* LR Creator Tab */}
         {activeTab === 'lr' && (
-          <LrCreator />
+          <LrCreator loadedLr={loadedLr} triggerToast={triggerToast} />
         )}
 
-        {/* Invoice History Tab */}
+        {/* Unified History Tab */}
         {activeTab === 'history' && (
           <div>
             <div className="dashboard-header">
-              <h2 className="dashboard-title">Invoice History Registry</h2>
+              <h2 className="dashboard-title">History Registry</h2>
             </div>
 
-            <div className="history-list">
-              {invoices.map((inv) => (
-                <div key={inv.id} className="history-item">
-                  <div className="history-left">
-                    <p className="history-code">{inv.id}</p>
-                    <p className="history-name">{inv.consignee}</p>
-                    <p className="history-date">Generated: {inv.date}</p>
-                  </div>
-                  <div className="history-right">
-                    <span className={`badge-status ${inv.status}`}>{inv.status}</span>
-                    <span className="history-amount">₹{inv.amount.toLocaleString()}</span>
-                    <button className="btn-outline" onClick={() => handleLoadInvoice(inv)}>
-                      View & Edit
-                    </button>
-                  </div>
-                </div>
-              ))}
+            {/* History Sub-tabs */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+              <button 
+                onClick={() => setHistorySubTab('dn')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  backgroundColor: historySubTab === 'dn' ? '#E53935' : 'transparent',
+                  color: historySubTab === 'dn' ? '#fff' : 'var(--text-secondary)',
+                  border: historySubTab === 'dn' ? 'none' : '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '0.85rem'
+                }}
+              >
+                Debit Notes (DN)
+              </button>
+              <button 
+                onClick={() => setHistorySubTab('lr')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  backgroundColor: historySubTab === 'lr' ? '#E53935' : 'transparent',
+                  color: historySubTab === 'lr' ? '#fff' : 'var(--text-secondary)',
+                  border: historySubTab === 'lr' ? 'none' : '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '0.85rem'
+                }}
+              >
+                Lorry Receipts (LR)
+              </button>
+              <button 
+                onClick={() => setHistorySubTab('quote')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  backgroundColor: historySubTab === 'quote' ? '#E53935' : 'transparent',
+                  color: historySubTab === 'quote' ? '#fff' : 'var(--text-secondary)',
+                  border: historySubTab === 'quote' ? 'none' : '1px solid var(--border-color)',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '0.85rem'
+                }}
+              >
+                Quotations
+              </button>
             </div>
+
+            {/* Invoices (Debit Notes) List */}
+            {historySubTab === 'dn' && (
+              <div className="history-list">
+                {invoices.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', padding: '20px 0' }}>No Debit Notes (Invoices) found.</p>
+                ) : (
+                  invoices.map((inv) => (
+                    <div key={inv.id} className="history-item">
+                      <div className="history-left">
+                        <p className="history-code">{inv.id}</p>
+                        <p className="history-name">{inv.consignee || inv.consigneeName}</p>
+                        <p className="history-date">Generated: {inv.date}</p>
+                      </div>
+                      <div className="history-right">
+                        <span className={`badge-status ${inv.status || 'pending'}`}>{inv.status || 'pending'}</span>
+                        <span className="history-amount">₹{(inv.amount || 0).toLocaleString()}</span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="btn-outline" onClick={() => handleLoadInvoice(inv)}>
+                            Edit / View
+                          </button>
+                          <button 
+                            className="btn-outline" 
+                            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                            onClick={() => setDeleteConfirm({ show: true, type: 'dn', id: inv.id })}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Lorry Receipts (LR) List */}
+            {historySubTab === 'lr' && (
+              <div className="history-list">
+                {savedLrs.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', padding: '20px 0' }}>No Lorry Receipts found.</p>
+                ) : (
+                  savedLrs.map((lr) => (
+                    <div key={lr.id} className="history-item">
+                      <div className="history-left">
+                        <p className="history-code">{lr.id}</p>
+                        <p className="history-name">From: {lr.consignor || 'Unknown'} | To: {lr.consignee || 'Unknown'}</p>
+                        <p className="history-date">Truck: {lr.truckNo || 'N/A'} | Date: {lr.date}</p>
+                      </div>
+                      <div className="history-right">
+                        <span className="history-amount">₹{(lr.amount || 0).toLocaleString()}</span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="btn-outline" onClick={() => {
+                            setLoadedLr(lr);
+                            setActiveTab('lr');
+                          }}>
+                            Edit / View
+                          </button>
+                          <button 
+                            className="btn-outline" 
+                            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                            onClick={() => setDeleteConfirm({ show: true, type: 'lr', id: lr.id })}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Quotations List */}
+            {historySubTab === 'quote' && (
+              <div className="history-list">
+                {savedQuotations.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', padding: '20px 0' }}>No Quotations found.</p>
+                ) : (
+                  savedQuotations.map((quote) => (
+                    <div key={quote.id} className="history-item">
+                      <div className="history-left">
+                        <p className="history-code">{quote.id}</p>
+                        <p className="history-name">Route: {quote.from || 'Tirupur'} to {quote.to}</p>
+                        <p className="history-date">Type: {quote.type === 'export' ? 'Export' : 'Domestic'} | Date: {quote.date}</p>
+                      </div>
+                      <div className="history-right">
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="btn-outline" onClick={() => {
+                            setLoadedQuotation(quote);
+                            setActiveTab(quote.type === 'export' ? 'quotation-export' : 'quotation-domestic');
+                          }}>
+                            Edit / View
+                          </button>
+                          <button 
+                            className="btn-outline" 
+                            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                            onClick={() => setDeleteConfirm({ show: true, type: 'quote', id: quote.id })}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
           </div>
         )}
       </main>
@@ -1354,37 +1610,104 @@ export default function Dashboard({ onLogout }) {
       <div className="mobile-nav">
         <button 
           className={`mobile-nav-link ${activeTab === 'overview' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('overview')}
+          onClick={() => handleTabChange('overview')}
         >
           <LayoutDashboard className="mobile-nav-icon" />
           <span>Overview</span>
         </button>
         <button 
           className={`mobile-nav-link ${activeTab === 'creator' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('creator')}
+          onClick={() => handleTabChange('creator')}
         >
           <Plus className="mobile-nav-icon" />
           <span>Create</span>
         </button>
         <button 
           className={`mobile-nav-link ${activeTab === 'lr' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('lr')}
+          onClick={() => handleTabChange('lr')}
         >
           <Truck className="mobile-nav-icon" />
           <span>LR</span>
         </button>
         <button 
+          className={`mobile-nav-link ${activeTab.startsWith('quotation') ? 'active' : ''}`} 
+          onClick={() => handleTabChange('quotation-export')}
+        >
+          <FileText className="mobile-nav-icon" />
+          <span>Quote</span>
+        </button>
+        <button 
           className={`mobile-nav-link ${activeTab === 'history' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('history')}
+          onClick={() => handleTabChange('history')}
         >
           <History className="mobile-nav-icon" />
           <span>History</span>
         </button>
-        <button className="mobile-nav-link logout" onClick={onLogout}>
+        <button className="mobile-nav-link logout" onClick={() => setShowLogoutConfirm(true)}>
           <LogOut className="mobile-nav-icon" />
           <span>Logout</span>
         </button>
       </div>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div style={{
+          position: 'fixed',
+          bottom: '80px',
+          right: '24px',
+          backgroundColor: toast.type === 'success' ? '#22C55E' : '#EF4444',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          zIndex: 2000,
+          fontWeight: 'bold',
+          fontSize: '0.9rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          pointerEvents: 'none'
+        }}>
+          <span>{toast.type === 'success' ? '✓' : '✗'}</span>
+          <span>{toast.message}</span>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.show && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: '#1E2330', padding: '24px', borderRadius: '8px', border: '1px solid #262D3D', color: '#fff', width: '320px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#fff' }}>Delete Item</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '0.9rem', color: '#94A3B8' }}>
+              Are you sure you want to delete this {deleteConfirm.type === 'dn' ? 'Invoice' : deleteConfirm.type === 'lr' ? 'Lorry Receipt' : 'Quotation'}?
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn-outline" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => setDeleteConfirm({ show: false, type: '', id: null })}>Cancel</button>
+              <button 
+                className="btn-primary" 
+                style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#EF4444', borderColor: '#EF4444', color: '#fff' }} 
+                onClick={confirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: '#1E2330', padding: '24px', borderRadius: '8px', border: '1px solid #262D3D', color: '#fff', width: '300px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#fff' }}>Logout</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '0.9rem', color: '#94A3B8' }}>Are you sure you want to log out?</p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn-outline" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => setShowLogoutConfirm(false)}>No</button>
+              <button className="btn-primary" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={onLogout}>Yes, Logout</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
