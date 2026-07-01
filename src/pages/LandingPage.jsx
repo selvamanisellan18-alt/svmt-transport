@@ -1,10 +1,34 @@
-import React, { useState } from 'react';
-import { Truck, Plane, Ship, Globe, Search, ArrowRight, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Truck, Plane, Ship, Globe, Search, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function LandingPage({ onNavigate }) {
   const [trackId, setTrackId] = useState('');
   const [activeService, setActiveService] = useState('road');
   const [trackingResult, setTrackingResult] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const slides = [
+    { src: '/trucks.png', alt: 'SVAT Fleet' },
+    { src: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=1200&auto=format&fit=crop', alt: 'Modern Container Trucks on the Road' },
+    { src: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1200&auto=format&fit=crop', alt: 'Warehouse Distribution Cargo' },
+    { src: 'https://images.unsplash.com/photo-1592838064805-71bcdb4f8a0c?q=80&w=1200&auto=format&fit=crop', alt: 'Modern Freight Cargo Truck Full View' },
+    { src: 'https://images.unsplash.com/photo-1501526029524-a8ea952b15be?q=80&w=1200&auto=format&fit=crop', alt: 'Full View Shipping Container Truck' }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
 
   const handleTrack = (e) => {
     e.preventDefault();
@@ -45,13 +69,41 @@ export default function LandingPage({ onNavigate }) {
           </a>
         </div>
 
-        {/* Trucks Banner Box */}
+        {/* Trucks Banner Box - Overhauled as dynamic glassmorphism slider */}
         <div className="hero-banner-container">
-          <img 
-            src="/trucks.png" 
-            alt="SVAT Fleet" 
-            className="hero-banner-img" 
-          />
+          <div className="slider-wrapper">
+            {slides.map((slide, idx) => (
+              <img 
+                key={idx}
+                src={slide.src} 
+                alt={slide.alt} 
+                className={`slide-img ${idx === currentSlide ? 'active' : ''}`}
+              />
+            ))}
+            
+            {/* Blurry feathered border overlays to give a smooth edge blur */}
+            <div className="slider-feather-left"></div>
+            <div className="slider-feather-right"></div>
+
+            {/* Slide Arrows */}
+            <button className="slider-btn prev" onClick={prevSlide} aria-label="Previous Slide">
+              <ChevronLeft size={20} />
+            </button>
+            <button className="slider-btn next" onClick={nextSlide} aria-label="Next Slide">
+              <ChevronRight size={20} />
+            </button>
+
+            {/* Slider Dots */}
+            <div className="slider-dots">
+              {slides.map((_, idx) => (
+                <div 
+                  key={idx}
+                  className={`slider-dot ${idx === currentSlide ? 'active' : ''}`}
+                  onClick={() => setCurrentSlide(idx)}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

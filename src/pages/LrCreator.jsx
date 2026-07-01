@@ -25,16 +25,16 @@ const SuggestionsDropdown = ({ query, list, onSelect }) => {
       top: '100%',
       left: 0,
       right: 0,
-      backgroundColor: '#1E2330',
-      border: '1px solid #262D3D',
-      borderRadius: '6px',
+      backgroundColor: '#FFFFFF',
+      border: '1px solid rgba(0, 0, 0, 0.1)',
+      borderRadius: '12px',
       maxHeight: '180px',
       overflowY: 'auto',
       zIndex: 100,
       listStyle: 'none',
       margin: 0,
       padding: 0,
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
+      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)'
     }}>
       {filtered.map((val, idx) => (
         <li 
@@ -43,8 +43,8 @@ const SuggestionsDropdown = ({ query, list, onSelect }) => {
             padding: '8px 12px',
             cursor: 'pointer',
             fontSize: '0.85rem',
-            color: '#E2E8F0',
-            borderBottom: '1px solid #262D3D',
+            color: 'var(--text-dark)',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
             transition: 'background-color 0.2s'
           }}
           onMouseDown={(e) => {

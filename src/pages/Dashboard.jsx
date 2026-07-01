@@ -85,16 +85,16 @@ const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
       top: '100%',
       left: 0,
       right: 0,
-      backgroundColor: '#1E2330',
-      border: '1px solid #262D3D',
-      borderRadius: '6px',
+      backgroundColor: '#FFFFFF',
+      border: '1px solid rgba(0, 0, 0, 0.1)',
+      borderRadius: '12px',
       maxHeight: '150px',
       overflowY: 'auto',
       zIndex: 50,
       listStyle: 'none',
       margin: 0,
       padding: 0,
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
+      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)'
     }}>
       {filtered.map((val, idx) => (
         <li 
@@ -103,8 +103,8 @@ const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
             padding: '8px 12px',
             cursor: 'pointer',
             fontSize: '0.85rem',
-            color: '#E2E8F0',
-            borderBottom: '1px solid #262D3D',
+            color: 'var(--text-dark)',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
             transition: 'background-color 0.2s'
           }}
           onMouseDown={(e) => {
@@ -453,6 +453,109 @@ export default function Dashboard({ onLogout }) {
     setDeleteConfirm({ show: false, type: '', id: null });
   };
 
+  // Calculate dynamic charts data based on state variables: invoices, savedLrs, savedQuotations
+  // Chart 1: Revenue Trends (aggregated by Jan-Dec calendar months)
+  const chartDataPoints = (() => {
+    const getInvoiceMonthIndex = (dateStr) => {
+      if (!dateStr) return -1;
+      const str = dateStr.toLowerCase();
+      const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      for (let i = 0; i < 12; i++) {
+        if (str.includes(months[i])) return i;
+      }
+      const parts = str.split(/[-/ ]+/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          const m = parseInt(parts[1], 10);
+          if (m >= 1 && m <= 12) return m - 1;
+        }
+        const m = parseInt(parts[1], 10);
+        if (m >= 1 && m <= 12) return m - 1;
+      }
+      try {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) return d.getMonth();
+      } catch (e) {}
+      return -1;
+    };
+
+    const monthlyRevenue = Array(12).fill(0);
+    // Accumulate invoice amounts by month
+    invoices.forEach((inv) => {
+      const monthIdx = getInvoiceMonthIndex(inv.date);
+      if (monthIdx >= 0 && monthIdx < 12) {
+        monthlyRevenue[monthIdx] += Number(inv.amount) || 0;
+      }
+    });
+
+    const monthlyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const hasRealData = monthlyRevenue.some(amt => amt > 0);
+    
+    // Map to coordinates (X from 40 to 480, Y from 180 to 30)
+    const points = monthlyLabels.map((label, idx) => {
+      const amt = hasRealData ? monthlyRevenue[idx] : (15000 + (idx % 3) * 12000 + (idx % 5) * 8000);
+      return { label, amount: amt };
+    });
+
+    const maxVal = Math.max(...points.map(p => p.amount), 10000);
+
+    return points.map((item, idx) => {
+      const x = 40 + idx * 40;
+      const y = 180 - (item.amount / maxVal) * 140;
+      return { x, y, label: item.label, amount: item.amount, isReal: hasRealData && monthlyRevenue[idx] > 0 };
+    });
+  })();
+
+  // Generate SVG path strings
+  const linePathD = chartDataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`).join(' ');
+  const areaPathD = chartDataPoints.length > 0 
+    ? `${linePathD} L ${chartDataPoints[chartDataPoints.length - 1].x},180 L ${chartDataPoints[0].x},180 Z` 
+    : '';
+
+  // Chart 2: Cargo Distribution based on actual counts
+  const donutSegments = (() => {
+    const invCount = invoices.length;
+    const lrCount = savedLrs.length;
+    const expCount = savedQuotations.filter(q => q.type === 'export').length;
+    const domCount = savedQuotations.filter(q => q.type === 'domestic').length;
+    
+    const totalItems = invCount + lrCount + expCount + domCount;
+    
+    const parts = totalItems > 0 ? [
+      { label: 'Debit Notes', count: invCount, color: 'var(--primary)', pct: Math.round((invCount / totalItems) * 100) },
+      { label: 'Lorry Receipts', count: lrCount, color: 'var(--text-dark)', pct: Math.round((lrCount / totalItems) * 100) },
+      { label: 'Export Quotes', count: expCount, color: '#64748B', pct: Math.round((expCount / totalItems) * 100) },
+      { label: 'Domestic Quotes', count: domCount, color: '#cbd5e1', pct: Math.round((domCount / totalItems) * 100) }
+    ] : [
+      { label: 'Debit Notes', count: 4, color: 'var(--primary)', pct: 40 },
+      { label: 'Lorry Receipts', count: 3, color: 'var(--text-dark)', pct: 30 },
+      { label: 'Export Quotes', count: 2, color: '#64748B', pct: 20 },
+      { label: 'Domestic Quotes', count: 1, color: '#cbd5e1', pct: 10 }
+    ];
+
+    // Recalculate segment percentages to make sure they sum up to 100
+    const totalPct = parts.reduce((a, b) => a + b.pct, 0);
+    if (totalPct !== 100 && totalPct > 0) {
+      const nonZeroIdx = parts.findIndex(p => p.pct > 0);
+      if (nonZeroIdx !== -1) {
+        parts[nonZeroIdx].pct += (100 - totalPct);
+      }
+    }
+
+    const circumference = 314.16;
+    let currentOffset = 0;
+    return parts.map((d) => {
+      const len = (d.pct / 100) * circumference;
+      const offset = currentOffset;
+      currentOffset -= len;
+      return {
+        ...d,
+        dasharray: `${len} ${circumference}`,
+        offset: offset
+      };
+    });
+  })();
+
   // Determine Title based on GST tax category
   const billTitle = formData.gstCategory !== 'exempted' ? "Tax Invoice" : "Bill Of Supply";
   const displayCgstRate = (formData.gstCategory === 'rcm' || formData.gstCategory === 'forward_5') ? 2.5 : (formData.gstCategory === 'forward_18' ? 9 : 0);
@@ -475,9 +578,31 @@ export default function Dashboard({ onLogout }) {
       {/* Sidebar Panel */}
       <aside className="sidebar">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-            <FileText size={24} />
-            <span>PORTAL</span>
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '0.5rem 0 1rem 0' }}>
+            <div style={{
+              width: '85px',
+              height: '85px',
+              borderRadius: '50%',
+              backgroundColor: '#FFFFFF',
+              border: '2px solid rgba(255, 255, 255, 0.85)',
+              boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(0,0,0,0.03)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              padding: '6px'
+            }}>
+              <img 
+                src="/logo.png" 
+                alt="SVAT Logo" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain',
+                  filter: 'contrast(1.05)'
+                }} 
+              />
+            </div>
           </div>
           
           <nav className="sidebar-menu">
@@ -627,8 +752,9 @@ export default function Dashboard({ onLogout }) {
               </div>
             </div>
 
-            <div style={{ textAlign: 'left', backgroundColor: 'var(--bg-card)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-              <h3 style={{ marginBottom: '1.5rem', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.5px' }}>Quick Actions</h3>
+            {/* Quick Actions (Rendered Second) */}
+            <div className="overview-card" style={{ display: 'block', textAlign: 'left', padding: '2rem', marginBottom: '2.5rem' }}>
+              <h3 style={{ marginBottom: '1.5rem', fontWeight: 700, color: 'var(--text-dark)', letterSpacing: '0.5px' }}>Quick Actions</h3>
               <div className="quick-actions-row">
                 <button className="btn-primary" onClick={() => { handleClearForm(); setActiveTab('creator'); }}>
                   <Plus size={18} /> Create Invoice
@@ -642,6 +768,104 @@ export default function Dashboard({ onLogout }) {
                 <button className="btn-outline" onClick={() => setActiveTab('history')}>
                   <History size={18} /> View History
                 </button>
+              </div>
+            </div>
+
+            {/* Unique Interactive Glassy Charts (Rendered Last) */}
+            <div className="dashboard-charts-grid">
+              {/* Chart 1: Revenue Trends */}
+              <div className="overview-card" style={{ flexDirection: 'column', alignItems: 'stretch', padding: '1.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)' }}>Revenue Trend</h3>
+                  <span style={{ fontSize: '0.8rem', padding: '4px 10px', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: '20px', fontWeight: 'bold', color: 'var(--text-dark)' }}>Dynamic (Real-time)</span>
+                </div>
+                <div style={{ position: 'relative', width: '100%', height: '220px' }}>
+                  <svg viewBox="0 0 500 220" width="100%" height="100%">
+                    <defs>
+                      <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.4"/>
+                        <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0"/>
+                      </linearGradient>
+                    </defs>
+                    {/* Gridlines */}
+                    <line x1="40" y1="30" x2="480" y2="30" stroke="rgba(0,0,0,0.04)" strokeDasharray="3,3" />
+                    <line x1="40" y1="80" x2="480" y2="80" stroke="rgba(0,0,0,0.04)" strokeDasharray="3,3" />
+                    <line x1="40" y1="130" x2="480" y2="130" stroke="rgba(0,0,0,0.04)" strokeDasharray="3,3" />
+                    <line x1="40" y1="180" x2="480" y2="180" stroke="rgba(0,0,0,0.06)" />
+
+                    {/* Area Path */}
+                    {areaPathD && <path d={areaPathD} fill="url(#areaGradient)" />}
+
+                    {/* Line Path */}
+                    {linePathD && <path d={linePathD} fill="none" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" />}
+
+                    {/* Glowing Path Points */}
+                    {chartDataPoints.map((pt, idx) => (
+                      <g key={idx}>
+                        <circle cx={pt.x} cy={pt.y} r="5" fill="#FFFFFF" stroke="var(--primary)" strokeWidth="2.5" />
+                        <title>{`Amount: ₹${pt.amount.toLocaleString()}`}</title>
+                      </g>
+                    ))}
+
+                    {/* Axis Labels */}
+                    {chartDataPoints.map((pt, idx) => (
+                      <text key={idx} x={pt.x} y="200" fill="var(--text-muted)" fontSize="9" textAnchor="middle" fontWeight="600">
+                        {pt.label}
+                      </text>
+                    ))}
+                  </svg>
+                </div>
+              </div>
+
+              {/* Chart 2: Cargo Distribution */}
+              <div className="overview-card" style={{ flexDirection: 'column', alignItems: 'stretch', padding: '1.75rem' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)', marginBottom: '1.5rem', textAlign: 'left' }}>Database Split</h3>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', gap: '1rem', height: '220px' }}>
+                  <div style={{ position: 'relative', width: '130px', height: '130px' }}>
+                    <svg width="100%" height="100%" viewBox="0 0 120 120">
+                      {/* Background track circle */}
+                      <circle cx="60" cy="60" r="50" fill="transparent" stroke="rgba(0,0,0,0.03)" strokeWidth="12" />
+                      
+                      {/* Segments */}
+                      {donutSegments.map((segment, idx) => (
+                        segment.pct > 0 && (
+                          <circle 
+                            key={idx}
+                            cx="60" 
+                            cy="60" 
+                            r="50" 
+                            fill="transparent" 
+                            stroke={segment.color} 
+                            strokeWidth="12" 
+                            strokeDasharray={segment.dasharray} 
+                            strokeDashoffset={segment.offset} 
+                            strokeLinecap="round" 
+                            transform="rotate(-90 60 60)" 
+                          />
+                        )
+                      ))}
+                    </svg>
+                    {/* Center percentage indicator */}
+                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
+                      <span style={{ color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase', fontSize: '0.6rem', fontWeight: 600 }}>Total</span>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-dark)', lineHeight: '1' }}>
+                        {invoices.length + savedLrs.length + savedQuotations.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Legend list */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left', minWidth: '100px' }}>
+                    {donutSegments.map((segment, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem' }}>
+                        <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: segment.color, display: 'inline-block' }}></span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-dark)' }}>
+                          {segment.label} ({segment.pct}%)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1675,10 +1899,10 @@ export default function Dashboard({ onLogout }) {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm.show && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: '#1E2330', padding: '24px', borderRadius: '8px', border: '1px solid #262D3D', color: '#fff', width: '320px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#fff' }}>Delete Item</h3>
-            <p style={{ margin: '0 0 24px 0', fontSize: '0.9rem', color: '#94A3B8' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+          <div style={{ backgroundColor: '#FFFFFF', padding: '28px 24px', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.08)', color: 'var(--text-dark)', width: '340px', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-dark)' }}>Delete Item</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '0.95rem', color: 'var(--text-muted)' }}>
               Are you sure you want to delete this {deleteConfirm.type === 'dn' ? 'Invoice' : deleteConfirm.type === 'lr' ? 'Lorry Receipt' : 'Quotation'}?
             </p>
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -1697,10 +1921,10 @@ export default function Dashboard({ onLogout }) {
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: '#1E2330', padding: '24px', borderRadius: '8px', border: '1px solid #262D3D', color: '#fff', width: '300px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#fff' }}>Logout</h3>
-            <p style={{ margin: '0 0 24px 0', fontSize: '0.9rem', color: '#94A3B8' }}>Are you sure you want to log out?</p>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+          <div style={{ backgroundColor: '#FFFFFF', padding: '28px 24px', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.08)', color: 'var(--text-dark)', width: '320px', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-dark)' }}>Logout</h3>
+            <p style={{ margin: '0 0 24px 0', fontSize: '0.95rem', color: 'var(--text-muted)' }}>Are you sure you want to log out?</p>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button className="btn-outline" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => setShowLogoutConfirm(false)}>No</button>
               <button className="btn-primary" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={onLogout}>Yes, Logout</button>

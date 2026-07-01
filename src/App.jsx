@@ -38,6 +38,13 @@ function App() {
 
   return (
     <>
+      {/* Ambient Animated Background Blobs */}
+      <div className="bg-blur-blobs">
+        <div className="blob blob-1"></div>
+        <div className="blob blob-2"></div>
+        <div className="blob blob-3"></div>
+      </div>
+
       {/* Main Top Header Navbar (Hidden in printable/dashboard states to maximize screen room) */}
       {page !== 'dashboard' && (
         <header className="navbar">

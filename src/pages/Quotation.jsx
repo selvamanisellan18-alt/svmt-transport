@@ -126,7 +126,7 @@ const Quotation = ({ type = 'export', loadedData = null, triggerToast = null }) 
             (REGULAR SERVICE TO: MUMBAI, CHENNAI, BANGALORE, TUTICORIN, COCHIN, PAN INDIA)
           </p>
           <p style={{ fontSize: '11px', margin: '0 0 4px 0' }}>
-            384/4 NETTIPATTAN KUTTAI, VAVIPALAYAM RING ROAD TIRUPPUR-641666
+            228/1, Rakkiyapalayam, Avinashi, Tirupur - 641 654.
           </p>
           <p style={{ fontSize: '12px', fontWeight: 'bold', margin: '0 0 4px 0' }}>
             Contact: +91-9655237104, +91-9655235088, +91-9585907007
@@ -399,7 +399,7 @@ const Quotation = ({ type = 'export', loadedData = null, triggerToast = null }) 
               </div>
               <div>
                 <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 10px 0', textTransform: 'uppercase' }}>SREE VAARAHI AMMAN Transports</h1>
-                <p style={{ margin: '0 0 6px 0', fontSize: '16px' }}><strong>Address:-</strong> 384/4 NETTIPATTAN KUTTAI, VAVIPALAYAM RING ROAD TIRUPPUR-641666</p>
+                <p style={{ margin: '0 0 6px 0', fontSize: '16px' }}><strong>Address:-</strong> 228/1, Rakkiyapalayam, Avinashi, Tirupur - 641 654.</p>
                 <p style={{ margin: '0 0 6px 0', fontSize: '16px' }}><strong>www :-</strong> www.sreevaarahiammantransports.com</p>
                 <p style={{ margin: '0', fontSize: '16px' }}><strong>mail :-</strong> Vaarahitpt104@gmail.com</p>
               </div>
