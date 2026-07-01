@@ -19,10 +19,21 @@ export default function LoginPage({ onLoginSuccess }) {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-header">
-          <div className="login-logo">
-            <Truck className="logo-icon" />
-            <span>SVAT</span>
+        <div className="login-header" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            backgroundColor: '#FFFFFF',
+            border: '2px solid rgba(15, 23, 42, 0.08)',
+            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.06)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            padding: '8px'
+          }}>
+            <img src="/logo.png" alt="SVAT Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
         </div>
 

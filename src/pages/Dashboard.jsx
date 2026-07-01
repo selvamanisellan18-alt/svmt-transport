@@ -1,43 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, FileText, History, LogOut, Plus, Trash2, Printer, Save, DollarSign, Calendar, TrendingUp, Truck } from 'lucide-react';
+import { LayoutDashboard, FileText, History, LogOut, Plus, Trash2, Printer, Save, IndianRupee, Calendar, TrendingUp, Truck } from 'lucide-react';
 import LrCreator from './LrCreator';
 import Quotation from './Quotation';
 
 // Custom SVG Logo for SVAT matching the red crescent-shaped truck logo with TM trademark
 const SVATLogo = () => (
-  <div style={{ 
-    display: 'flex', 
-    flexDirection: 'column', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    border: '1.5px solid #000000', 
-    borderRadius: '6px', 
-    padding: '4px', 
-    width: '105px', 
-    height: '105px', 
-    backgroundColor: '#FFFFFF', 
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '1.5px solid #000000',
+    borderRadius: '6px',
+    padding: '4px',
+    width: '105px',
+    height: '105px',
+    backgroundColor: '#FFFFFF',
     flexShrink: 0,
     position: 'relative'
   }}>
-    {/* Small TM mark in the top-right of the logo box */}
-    <span style={{
-      position: 'absolute',
-      top: '3px',
-      right: '6px',
-      fontSize: '0.55rem',
-      fontWeight: '900',
-      color: '#E53935'
-    }}>TM</span>
 
-    <img 
-      src="/logo.png" 
-      alt="SVAT Logo" 
-      style={{ 
-        width: '95px', 
-        height: '95px', 
+
+    <img
+      src="/logo.png"
+      alt="SVAT Logo"
+      style={{
+        width: '95px',
+        height: '95px',
         objectFit: 'contain',
         filter: 'brightness(1.2) contrast(1.1) saturate(1.15)'
-      }} 
+      }}
     />
   </div>
 );
@@ -46,10 +38,10 @@ const SVATLogo = () => (
 const numberToWords = (num) => {
   const integerPart = Math.floor(num);
   if (integerPart === 0) return 'INR ZERO ONLY';
-  
+
   const a = ['', 'one ', 'two ', 'three ', 'four ', 'five ', 'six ', 'seven ', 'eight ', 'nine ', 'ten ', 'eleven ', 'twelve ', 'thirteen ', 'fourteen ', 'fifteen ', 'sixteen ', 'seventeen ', 'eighteen ', 'nineteen '];
   const b = ['', '', 'twenty ', 'thirty ', 'forty ', 'fifty ', 'sixty ', 'seventy ', 'eighty ', 'ninety '];
-  
+
   const formatWord = (n) => {
     if (n < 20) return a[n];
     if (n < 100) return b[Math.floor(n / 10)] + a[n % 10];
@@ -65,7 +57,7 @@ const numberToWords = (num) => {
 
 // Autocomplete suggestions dropdown element
 const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
-  const filtered = list.filter(val => 
+  const filtered = list.filter(val =>
     val.toLowerCase().includes((query || '').toLowerCase()) && val.toLowerCase() !== (query || '').toLowerCase()
   );
 
@@ -97,7 +89,7 @@ const SuggestionsDropdown = ({ query, list, onSelect, onClose }) => {
       boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08)'
     }}>
       {filtered.map((val, idx) => (
-        <li 
+        <li
           key={idx}
           style={{
             padding: '8px 12px',
@@ -253,7 +245,7 @@ export default function Dashboard({ onLogout }) {
       const r = parseFloat(cleanRateStr) || 0;
       return acc + (q * r);
     }, 0);
-    
+
     setSubtotal(calculatedSubtotal);
 
     let cgstRate = 0;
@@ -272,11 +264,11 @@ export default function Dashboard({ onLogout }) {
     const cgst = (calculatedSubtotal * cgstRate) / 100;
     const sgst = (calculatedSubtotal * sgstRate) / 100;
     const igst = (calculatedSubtotal * igstRate) / 100;
-    
+
     // For RCM or Exempted, the GST amounts are shown on invoice but NOT added to payable Grand Total.
     const isRcmOrExempt = formData.gstCategory === 'rcm' || formData.gstCategory === 'exempted';
-    const grandTotal = isRcmOrExempt 
-      ? calculatedSubtotal + roundOff 
+    const grandTotal = isRcmOrExempt
+      ? calculatedSubtotal + roundOff
       : calculatedSubtotal + cgst + sgst + igst + roundOff;
 
     setCgstAmount(cgst);
@@ -333,7 +325,7 @@ export default function Dashboard({ onLogout }) {
       ...newItems[index],
       [field]: value
     };
-    
+
     // Automatically calculate amount in form row when Qty or Rate changes
     if (field === 'quantity' || field === 'rate') {
       const qStr = field === 'quantity' ? value : newItems[index].quantity;
@@ -346,7 +338,7 @@ export default function Dashboard({ onLogout }) {
         newItems[index].amount = (q * r).toString();
       }
     }
-    
+
     setFormData(prev => ({
       ...prev,
       items: newItems
@@ -378,7 +370,7 @@ export default function Dashboard({ onLogout }) {
       amount: totalAmount,
       status: 'pending'
     };
-    
+
     let updated;
     if (invoices.some(inv => inv.id === newInvoiceObj.id)) {
       updated = invoices.map(inv => inv.id === newInvoiceObj.id ? newInvoiceObj : inv);
@@ -412,15 +404,15 @@ export default function Dashboard({ onLogout }) {
 
     // Replace slashes with underscores for safe filename
     const filename = `${(formData.debitNoteNo || 'invoice').replace(/\//g, '_')}.pdf`;
-    
+
     const opt = {
-      margin:       0.15,
-      filename:     filename,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 3.5, useCORS: true, logging: false },
-      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      margin: 0.15,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 3.5, useCORS: true, logging: false },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
-    
+
     window.html2pdf().set(opt).from(element).save();
   };
 
@@ -475,7 +467,7 @@ export default function Dashboard({ onLogout }) {
       try {
         const d = new Date(dateStr);
         if (!isNaN(d.getTime())) return d.getMonth();
-      } catch (e) {}
+      } catch (e) { }
       return -1;
     };
 
@@ -490,7 +482,7 @@ export default function Dashboard({ onLogout }) {
 
     const monthlyLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const hasRealData = monthlyRevenue.some(amt => amt > 0);
-    
+
     // Map to coordinates (X from 40 to 480, Y from 180 to 30)
     const points = monthlyLabels.map((label, idx) => {
       const amt = hasRealData ? monthlyRevenue[idx] : (15000 + (idx % 3) * 12000 + (idx % 5) * 8000);
@@ -508,8 +500,8 @@ export default function Dashboard({ onLogout }) {
 
   // Generate SVG path strings
   const linePathD = chartDataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`).join(' ');
-  const areaPathD = chartDataPoints.length > 0 
-    ? `${linePathD} L ${chartDataPoints[chartDataPoints.length - 1].x},180 L ${chartDataPoints[0].x},180 Z` 
+  const areaPathD = chartDataPoints.length > 0
+    ? `${linePathD} L ${chartDataPoints[chartDataPoints.length - 1].x},180 L ${chartDataPoints[0].x},180 Z`
     : '';
 
   // Chart 2: Cargo Distribution based on actual counts
@@ -518,16 +510,16 @@ export default function Dashboard({ onLogout }) {
     const lrCount = savedLrs.length;
     const expCount = savedQuotations.filter(q => q.type === 'export').length;
     const domCount = savedQuotations.filter(q => q.type === 'domestic').length;
-    
+
     const totalItems = invCount + lrCount + expCount + domCount;
-    
+
     const parts = totalItems > 0 ? [
-      { label: 'Debit Notes', count: invCount, color: 'var(--primary)', pct: Math.round((invCount / totalItems) * 100) },
+      { label: 'Invoices', count: invCount, color: 'var(--primary)', pct: Math.round((invCount / totalItems) * 100) },
       { label: 'Lorry Receipts', count: lrCount, color: 'var(--text-dark)', pct: Math.round((lrCount / totalItems) * 100) },
       { label: 'Export Quotes', count: expCount, color: '#64748B', pct: Math.round((expCount / totalItems) * 100) },
       { label: 'Domestic Quotes', count: domCount, color: '#cbd5e1', pct: Math.round((domCount / totalItems) * 100) }
     ] : [
-      { label: 'Debit Notes', count: 4, color: 'var(--primary)', pct: 40 },
+      { label: 'Invoices', count: 4, color: 'var(--primary)', pct: 40 },
       { label: 'Lorry Receipts', count: 3, color: 'var(--text-dark)', pct: 30 },
       { label: 'Export Quotes', count: 2, color: '#64748B', pct: 20 },
       { label: 'Domestic Quotes', count: 1, color: '#cbd5e1', pct: 10 }
@@ -592,22 +584,22 @@ export default function Dashboard({ onLogout }) {
               overflow: 'hidden',
               padding: '6px'
             }}>
-              <img 
-                src="/logo.png" 
-                alt="SVAT Logo" 
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
+              <img
+                src="/logo.png"
+                alt="SVAT Logo"
+                style={{
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'contain',
                   filter: 'contrast(1.05)'
-                }} 
+                }}
               />
             </div>
           </div>
-          
+
           <nav className="sidebar-menu">
             <li className="sidebar-item">
-              <button 
+              <button
                 className={`sidebar-link ${activeTab === 'overview' ? 'active' : ''}`}
                 onClick={() => handleTabChange('overview')}
               >
@@ -616,7 +608,7 @@ export default function Dashboard({ onLogout }) {
               </button>
             </li>
             <li className="sidebar-item">
-              <button 
+              <button
                 className={`sidebar-link ${activeTab === 'creator' ? 'active' : ''}`}
                 onClick={() => handleTabChange('creator')}
               >
@@ -625,7 +617,7 @@ export default function Dashboard({ onLogout }) {
               </button>
             </li>
             <li className="sidebar-item">
-              <button 
+              <button
                 className={`sidebar-link ${activeTab === 'lr' ? 'active' : ''}`}
                 onClick={() => handleTabChange('lr')}
               >
@@ -634,7 +626,7 @@ export default function Dashboard({ onLogout }) {
               </button>
             </li>
             <li className="sidebar-item" style={{ flexDirection: 'column', alignItems: 'flex-start', padding: 0 }}>
-              <button 
+              <button
                 className={`sidebar-link ${activeTab.startsWith('quotation') ? 'active' : ''}`}
                 onClick={() => setIsQuotationMenuOpen(!isQuotationMenuOpen)}
                 style={{ width: '100%', justifyContent: 'space-between', display: 'flex', padding: '0.75rem 1rem' }}
@@ -645,17 +637,17 @@ export default function Dashboard({ onLogout }) {
                 </div>
                 <span style={{ fontSize: '0.75rem' }}>{isQuotationMenuOpen ? '▼' : '▶'}</span>
               </button>
-              
+
               {isQuotationMenuOpen && (
                 <div style={{ paddingLeft: '2.5rem', display: 'flex', flexDirection: 'column', width: '100%', marginTop: '0.25rem' }}>
-                  <button 
+                  <button
                     className={`sidebar-link ${activeTab === 'quotation-export' ? 'active' : ''}`}
                     onClick={() => handleTabChange('quotation-export')}
                     style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', width: '100%', justifyContent: 'flex-start', backgroundColor: 'transparent', color: activeTab === 'quotation-export' ? '#E53935' : 'var(--text-secondary)' }}
                   >
                     Export
                   </button>
-                  <button 
+                  <button
                     className={`sidebar-link ${activeTab === 'quotation-domestic' ? 'active' : ''}`}
                     onClick={() => handleTabChange('quotation-domestic')}
                     style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', width: '100%', justifyContent: 'flex-start', backgroundColor: 'transparent', color: activeTab === 'quotation-domestic' ? '#E53935' : 'var(--text-secondary)' }}
@@ -666,7 +658,7 @@ export default function Dashboard({ onLogout }) {
               )}
             </li>
             <li className="sidebar-item">
-              <button 
+              <button
                 className={`sidebar-link ${activeTab === 'history' ? 'active' : ''}`}
                 onClick={() => handleTabChange('history')}
               >
@@ -705,7 +697,7 @@ export default function Dashboard({ onLogout }) {
             <div className="dashboard-header">
               <h2 className="dashboard-title">Dashboard Overview</h2>
             </div>
-            
+
             <div className="overview-grid">
               {/* Card 1: Total Invoiced */}
               <div className="overview-card">
@@ -714,10 +706,10 @@ export default function Dashboard({ onLogout }) {
                   <p className="overview-card-value">₹{(invoices.reduce((a, b) => a + b.amount, 0)).toLocaleString()}</p>
                 </div>
                 <div className="overview-card-icon">
-                  <DollarSign size={24} />
+                  <IndianRupee size={24} />
                 </div>
               </div>
-              
+
               {/* Card 2: Invoices Count */}
               <div className="overview-card">
                 <div className="overview-card-info">
@@ -777,14 +769,13 @@ export default function Dashboard({ onLogout }) {
               <div className="overview-card" style={{ flexDirection: 'column', alignItems: 'stretch', padding: '1.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-dark)' }}>Revenue Trend</h3>
-                  <span style={{ fontSize: '0.8rem', padding: '4px 10px', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: '20px', fontWeight: 'bold', color: 'var(--text-dark)' }}>Dynamic (Real-time)</span>
                 </div>
                 <div style={{ position: 'relative', width: '100%', height: '220px' }}>
                   <svg viewBox="0 0 500 220" width="100%" height="100%">
                     <defs>
                       <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.4"/>
-                        <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0"/>
+                        <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0" />
                       </linearGradient>
                     </defs>
                     {/* Gridlines */}
@@ -825,22 +816,22 @@ export default function Dashboard({ onLogout }) {
                     <svg width="100%" height="100%" viewBox="0 0 120 120">
                       {/* Background track circle */}
                       <circle cx="60" cy="60" r="50" fill="transparent" stroke="rgba(0,0,0,0.03)" strokeWidth="12" />
-                      
+
                       {/* Segments */}
                       {donutSegments.map((segment, idx) => (
                         segment.pct > 0 && (
-                          <circle 
+                          <circle
                             key={idx}
-                            cx="60" 
-                            cy="60" 
-                            r="50" 
-                            fill="transparent" 
-                            stroke={segment.color} 
-                            strokeWidth="12" 
-                            strokeDasharray={segment.dasharray} 
-                            strokeDashoffset={segment.offset} 
-                            strokeLinecap="round" 
-                            transform="rotate(-90 60 60)" 
+                            cx="60"
+                            cy="60"
+                            r="50"
+                            fill="transparent"
+                            stroke={segment.color}
+                            strokeWidth="12"
+                            strokeDasharray={segment.dasharray}
+                            strokeDashoffset={segment.offset}
+                            strokeLinecap="round"
+                            transform="rotate(-90 60 60)"
                           />
                         )
                       ))}
@@ -881,23 +872,23 @@ export default function Dashboard({ onLogout }) {
             <div className="invoice-workspace">
               {/* Creator Form */}
               <div className="invoice-form-container">
-                
+
                 {/* Company Header (Fully Editable) */}
                 <h4 className="form-section-title">Billing Entity Details (Seller)</h4>
                 <div className="form-group">
                   <label className="form-label">Company Name</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     value={formData.companyName}
                     onChange={(e) => handleInputChange('companyName', e.target.value)}
                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Company Address</label>
-                  <textarea 
-                    rows={2} 
-                    className="form-input" 
+                  <textarea
+                    rows={2}
+                    className="form-input"
                     value={formData.companyAddress}
                     onChange={(e) => handleInputChange('companyAddress', e.target.value)}
                   />
@@ -905,18 +896,18 @@ export default function Dashboard({ onLogout }) {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label">GSTIN / UIN</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.companyGst}
                       onChange={(e) => handleInputChange('companyGst', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">State & Code</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.companyState}
                       onChange={(e) => handleInputChange('companyState', e.target.value)}
                     />
@@ -925,18 +916,18 @@ export default function Dashboard({ onLogout }) {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label">Website</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.companyWebsite}
                       onChange={(e) => handleInputChange('companyWebsite', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">E-Mail</label>
-                    <input 
-                      type="email" 
-                      className="form-input" 
+                    <input
+                      type="email"
+                      className="form-input"
                       value={formData.companyEmail}
                       onChange={(e) => handleInputChange('companyEmail', e.target.value)}
                     />
@@ -947,18 +938,18 @@ export default function Dashboard({ onLogout }) {
                 <h4 className="form-section-title">Consignee (Buyer / Bill To)</h4>
                 <div className="form-group">
                   <label className="form-label">Consignee Name</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     value={formData.consigneeName}
                     onChange={(e) => handleInputChange('consigneeName', e.target.value)}
                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Consignee Address</label>
-                  <textarea 
-                    rows={2} 
-                    className="form-input" 
+                  <textarea
+                    rows={2}
+                    className="form-input"
                     value={formData.consigneeAddress}
                     onChange={(e) => handleInputChange('consigneeAddress', e.target.value)}
                   />
@@ -966,18 +957,18 @@ export default function Dashboard({ onLogout }) {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label">GSTIN / UIN</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.consigneeGst}
                       onChange={(e) => handleInputChange('consigneeGst', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">State & Code</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.consigneeState}
                       onChange={(e) => handleInputChange('consigneeState', e.target.value)}
                     />
@@ -989,18 +980,18 @@ export default function Dashboard({ onLogout }) {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label">Debit Note No / Invoice No</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.debitNoteNo}
                       onChange={(e) => handleInputChange('debitNoteNo', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Dated</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.date}
                       onChange={(e) => handleInputChange('date', e.target.value)}
                     />
@@ -1009,18 +1000,18 @@ export default function Dashboard({ onLogout }) {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label">Original Invoice No</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.originalInvoiceNo}
                       onChange={(e) => handleInputChange('originalInvoiceNo', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Original Invoice Date</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.originalInvoiceDate}
                       onChange={(e) => handleInputChange('originalInvoiceDate', e.target.value)}
                     />
@@ -1028,9 +1019,9 @@ export default function Dashboard({ onLogout }) {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Other References</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     value={formData.otherRefs}
                     onChange={(e) => handleInputChange('otherRefs', e.target.value)}
                   />
@@ -1041,7 +1032,7 @@ export default function Dashboard({ onLogout }) {
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                   <div className="form-group">
                     <label className="form-label">GST Tax Category</label>
-                    <select 
+                    <select
                       className="form-input"
                       value={formData.gstCategory || 'exempted'}
                       onChange={(e) => handleInputChange('gstCategory', e.target.value)}
@@ -1054,10 +1045,10 @@ export default function Dashboard({ onLogout }) {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Round Off (+/-)</label>
-                    <input 
+                    <input
                       type="number"
                       step="any"
-                      className="form-input" 
+                      className="form-input"
                       placeholder="e.g. -0.50"
                       value={formData.roundOff}
                       onChange={(e) => handleInputChange('roundOff', e.target.value)}
@@ -1070,18 +1061,18 @@ export default function Dashboard({ onLogout }) {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label">Vessel / Flight No</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.vesselFlightNo}
                       onChange={(e) => handleInputChange('vesselFlightNo', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Place of Receipt by Shipper</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.placeOfReceipt}
                       onChange={(e) => handleInputChange('placeOfReceipt', e.target.value)}
                     />
@@ -1090,18 +1081,18 @@ export default function Dashboard({ onLogout }) {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label">City/Port of Loading</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.portOfLoading}
                       onChange={(e) => handleInputChange('portOfLoading', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">City/Port of Discharge</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.portOfDischarge}
                       onChange={(e) => handleInputChange('portOfDischarge', e.target.value)}
                     />
@@ -1111,27 +1102,27 @@ export default function Dashboard({ onLogout }) {
                 <div className="form-grid-3">
                   <div className="form-group">
                     <label className="form-label">No of CTNS</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.ctns}
                       onChange={(e) => handleInputChange('ctns', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">CBM Volume</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.cbm}
                       onChange={(e) => handleInputChange('cbm', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Weight</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.weight}
                       onChange={(e) => handleInputChange('weight', e.target.value)}
                     />
@@ -1158,9 +1149,9 @@ export default function Dashboard({ onLogout }) {
                     {formData.items.map((item, idx) => (
                       <tr key={idx}>
                         <td style={{ position: 'relative' }}>
-                          <textarea 
+                          <textarea
                             rows={1}
-                            className="form-input" 
+                            className="form-input"
                             style={{ width: '100%', resize: 'vertical' }}
                             value={item.particulars}
                             onChange={(e) => {
@@ -1171,9 +1162,9 @@ export default function Dashboard({ onLogout }) {
                             placeholder="Particulars"
                           />
                           {activeRowIdx === idx && (
-                            <SuggestionsDropdown 
-                              query={item.particulars} 
-                              list={suggestions} 
+                            <SuggestionsDropdown
+                              query={item.particulars}
+                              list={suggestions}
                               onSelect={(val) => {
                                 handleItemChange(idx, 'particulars', val);
                                 setActiveRowIdx(null);
@@ -1183,9 +1174,9 @@ export default function Dashboard({ onLogout }) {
                           )}
                         </td>
                         <td>
-                          <input 
-                            type="text" 
-                            className="form-input" 
+                          <input
+                            type="text"
+                            className="form-input"
                             style={{ width: '100%' }}
                             value={item.quantity}
                             onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
@@ -1193,9 +1184,9 @@ export default function Dashboard({ onLogout }) {
                           />
                         </td>
                         <td>
-                          <input 
-                            type="text" 
-                            className="form-input" 
+                          <input
+                            type="text"
+                            className="form-input"
                             style={{ width: '100%' }}
                             value={item.rate}
                             onChange={(e) => handleItemChange(idx, 'rate', e.target.value)}
@@ -1203,9 +1194,9 @@ export default function Dashboard({ onLogout }) {
                           />
                         </td>
                         <td>
-                          <input 
-                            type="text" 
-                            className="form-input" 
+                          <input
+                            type="text"
+                            className="form-input"
                             style={{ width: '100%' }}
                             value={item.per}
                             onChange={(e) => handleItemChange(idx, 'per', e.target.value)}
@@ -1213,9 +1204,9 @@ export default function Dashboard({ onLogout }) {
                           />
                         </td>
                         <td>
-                          <input 
-                            type="text" 
-                            className="form-input" 
+                          <input
+                            type="text"
+                            className="form-input"
                             style={{ width: '100%' }}
                             value={item.amount}
                             onChange={(e) => handleItemChange(idx, 'amount', e.target.value)}
@@ -1223,8 +1214,8 @@ export default function Dashboard({ onLogout }) {
                           />
                         </td>
                         <td>
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             className="btn-icon-danger"
                             onClick={() => removeItemRow(idx)}
                             disabled={formData.items.length <= 1}
@@ -1244,18 +1235,18 @@ export default function Dashboard({ onLogout }) {
                 <h4 className="form-section-title">Bank Accounts Info</h4>
                 <div className="form-group">
                   <label className="form-label">A/c Holder Name</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     value={formData.bankHolderName}
                     onChange={(e) => handleInputChange('bankHolderName', e.target.value)}
                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Bank Name</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     value={formData.bankName}
                     onChange={(e) => handleInputChange('bankName', e.target.value)}
                   />
@@ -1263,18 +1254,18 @@ export default function Dashboard({ onLogout }) {
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label">Account No</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.bankAccount}
                       onChange={(e) => handleInputChange('bankAccount', e.target.value)}
                     />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Branch & IFSC</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      className="form-input"
                       value={formData.bankBranch}
                       onChange={(e) => handleInputChange('bankBranch', e.target.value)}
                     />
@@ -1285,9 +1276,9 @@ export default function Dashboard({ onLogout }) {
                 <h4 className="form-section-title">Signatory Details</h4>
                 <div className="form-group">
                   <label className="form-label">Authorised Signatory Name</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     value={formData.signatoryName}
                     onChange={(e) => handleInputChange('signatoryName', e.target.value)}
                   />
@@ -1295,9 +1286,9 @@ export default function Dashboard({ onLogout }) {
 
                 <div className="form-group">
                   <label className="form-label">Amount Chargeable in Words (Override)</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    className="form-input"
                     placeholder="Leave empty to calculate automatically"
                     value={formData.wordsOverride}
                     onChange={(e) => handleInputChange('wordsOverride', e.target.value)}
@@ -1336,21 +1327,21 @@ export default function Dashboard({ onLogout }) {
                     </div>
 
                     {/* Top Metadata Grid: divided into Left Half (Seller, Buyer) & Right Half (Note dates, cargo specs) */}
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: '1.1fr 1fr', 
-                      border: '1.5px solid #000000', 
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1.1fr 1fr',
+                      border: '1.5px solid #000000',
                       borderBottom: 'none'
                     }}>
                       {/* Left Column (Seller Info & Buyer Info) */}
                       <div style={{ display: 'flex', flexDirection: 'column', borderRight: '1.5px solid #000000' }}>
                         {/* Seller block */}
-                        <div style={{ 
-                          display: 'grid', 
-                          gridTemplateColumns: '110px 1fr', 
-                          alignItems: 'center', 
-                          padding: '8px', 
-                          borderBottom: '1.5px solid #000000' 
+                        <div style={{
+                          display: 'grid',
+                          gridTemplateColumns: '110px 1fr',
+                          alignItems: 'center',
+                          padding: '8px',
+                          borderBottom: '1.5px solid #000000'
                         }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <SVATLogo />
@@ -1400,7 +1391,7 @@ export default function Dashboard({ onLogout }) {
                             <strong style={{ fontSize: '0.75rem' }}>{formData.date}</strong>
                           </div>
                         </div>
-                        
+
                         {/* Row 2 */}
                         <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', borderBottom: '1.5px solid #000000', minHeight: '38px' }}>
                           <div style={{ borderRight: '1.5px solid #000000', padding: '4px' }}>
@@ -1464,14 +1455,14 @@ export default function Dashboard({ onLogout }) {
                             const cleanAmtStr = (item.amount || '').toString().replace(/[^0-9.]/g, '');
                             const cleanQtyStr = (item.quantity || '').toString().replace(/[^0-9.]/g, '');
                             const cleanRateStr = (item.rate || '').toString().replace(/[^0-9.]/g, '');
-                            
+
                             const hasAmt = cleanAmtStr !== '' || (cleanQtyStr !== '' && cleanRateStr !== '');
                             const amt = hasAmt
-                              ? (cleanAmtStr !== '' 
-                                  ? (parseFloat(cleanAmtStr) || 0) 
-                                  : (parseFloat(cleanQtyStr) || 0) * (parseFloat(cleanRateStr) || 0))
+                              ? (cleanAmtStr !== ''
+                                ? (parseFloat(cleanAmtStr) || 0)
+                                : (parseFloat(cleanQtyStr) || 0) * (parseFloat(cleanRateStr) || 0))
                               : null;
-                              
+
                             const qtyVal = cleanQtyStr !== '' ? parseFloat(cleanQtyStr) : null;
                             const rateVal = cleanRateStr !== '' ? parseFloat(cleanRateStr) : null;
                             const amtStr = amt !== null ? amt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
@@ -1490,168 +1481,168 @@ export default function Dashboard({ onLogout }) {
                             );
                           })}
 
-                        {/* Extra padding rows to keep height scaled like standard A4 template */}
-                        {Array.from({ length: Math.max(0, 6 - formData.items.length) }).map((_, idx) => (
-                          <tr key={`empty-${idx}`} className="bill-table-row" style={{ height: '32px' }}>
-                            <td style={{ borderRight: '1.5px solid #000000' }}></td>
-                            <td style={{ borderRight: '1.5px solid #000000' }}></td>
-                            <td style={{ borderRight: '1.5px solid #000000' }}></td>
-                            <td style={{ borderRight: '1.5px solid #000000' }}></td>
-                            <td style={{ borderRight: '1.5px solid #000000' }}></td>
-                            <td></td>
+                          {/* Extra padding rows to keep height scaled like standard A4 template */}
+                          {Array.from({ length: Math.max(0, 6 - formData.items.length) }).map((_, idx) => (
+                            <tr key={`empty-${idx}`} className="bill-table-row" style={{ height: '32px' }}>
+                              <td style={{ borderRight: '1.5px solid #000000' }}></td>
+                              <td style={{ borderRight: '1.5px solid #000000' }}></td>
+                              <td style={{ borderRight: '1.5px solid #000000' }}></td>
+                              <td style={{ borderRight: '1.5px solid #000000' }}></td>
+                              <td style={{ borderRight: '1.5px solid #000000' }}></td>
+                              <td></td>
+                            </tr>
+                          ))}
+
+                          {/* Sub Total row (Always shown) */}
+                          <tr style={{ borderTop: '1.5px solid #000000', fontWeight: 'bold' }}>
+                            <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                            <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>Sub Total</td>
+                            <td style={{ textAlign: 'right', padding: '4px' }}>{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                           </tr>
-                        ))}
 
-                        {/* Sub Total row (Always shown) */}
-                        <tr style={{ borderTop: '1.5px solid #000000', fontWeight: 'bold' }}>
-                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
-                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>Sub Total</td>
-                          <td style={{ textAlign: 'right', padding: '4px' }}>{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        </tr>
+                          {/* CGST row */}
+                          <tr style={{ fontWeight: 'bold' }}>
+                            <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                            <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
+                              CGST ( {displayCgstRate ? `${displayCgstRate} %` : '        %'} )
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '4px' }}>{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          </tr>
 
-                        {/* CGST row */}
-                        <tr style={{ fontWeight: 'bold' }}>
-                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
-                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
-                            CGST ( {displayCgstRate ? `${displayCgstRate} %` : '        %'} )
-                          </td>
-                          <td style={{ textAlign: 'right', padding: '4px' }}>{cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        </tr>
+                          {/* SGST row */}
+                          <tr style={{ fontWeight: 'bold' }}>
+                            <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                            <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
+                              SGST ( {displaySgstRate ? `${displaySgstRate} %` : '        %'} )
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '4px' }}>{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          </tr>
 
-                        {/* SGST row */}
-                        <tr style={{ fontWeight: 'bold' }}>
-                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
-                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
-                            SGST ( {displaySgstRate ? `${displaySgstRate} %` : '        %'} )
-                          </td>
-                          <td style={{ textAlign: 'right', padding: '4px' }}>{sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        </tr>
+                          {/* IGST row */}
+                          <tr style={{ fontWeight: 'bold' }}>
+                            <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                            <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
+                              IGST ( 0 % )
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '4px' }}>{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          </tr>
 
-                        {/* IGST row */}
-                        <tr style={{ fontWeight: 'bold' }}>
-                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
-                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
-                            IGST ( 0 % )
-                          </td>
-                          <td style={{ textAlign: 'right', padding: '4px' }}>{igstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        </tr>
+                          {/* Round Off row */}
+                          <tr style={{ fontWeight: 'bold' }}>
+                            <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
+                            <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
+                              Round Off (+/-)
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '4px' }}>{(parseFloat(formData.roundOff) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                          </tr>
 
-                        {/* Round Off row */}
-                        <tr style={{ fontWeight: 'bold' }}>
-                          <td style={{ borderRight: '1.5px solid #000000', padding: '4px' }}></td>
-                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '4px' }}>
-                            Round Off (+/-)
-                          </td>
-                          <td style={{ textAlign: 'right', padding: '4px' }}>{(parseFloat(formData.roundOff) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                        </tr>
-                        
-                        {/* Grand Total Row */}
-                        <tr style={{ borderTop: '1.5px solid #000000', fontWeight: '800', backgroundColor: '#E2E8F0' }}>
-                          <td style={{ borderRight: '1.5px solid #000000', padding: '5px' }}></td>
-                          <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '5px', fontWeight: '800' }}>
-                            Grand Total
-                          </td>
-                          <td style={{ textAlign: 'right', padding: '5px', fontWeight: '800' }}>
-                            ₹ {totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                          {/* Grand Total Row */}
+                          <tr style={{ borderTop: '1.5px solid #000000', fontWeight: '800', backgroundColor: '#E2E8F0' }}>
+                            <td style={{ borderRight: '1.5px solid #000000', padding: '5px' }}></td>
+                            <td colSpan={4} style={{ borderRight: '1.5px solid #000000', textAlign: 'right', padding: '5px', fontWeight: '800' }}>
+                              Grand Total
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '5px', fontWeight: '800' }}>
+                              ₹ {totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
 
-                  {/* GST RCM Status Bar */}
-                  <div style={{ 
-                    border: '1.5px solid #000000', 
-                    borderTop: 'none',
-                    padding: '5px 8px',
-                    fontSize: '0.72rem',
-                    fontWeight: '800',
-                    textAlign: 'left',
-                    backgroundColor: '#FFFFFF',
-                    lineHeight: 1.3
-                  }}>
-                    <span>Whether GST is payable on Reverse Charge basis (RCM): <strong>{
-                      formData.gstCategory === 'rcm' 
-                        ? 'GST charge applicable for RCM' 
-                        : (formData.gstCategory === 'exempted' ? 'Exempted' : 'No')
-                    }</strong></span>
-                  </div>
-
-                  {/* Bottom Section: Words block on left, Bank + Signatory on right */}
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: '53% 47%', 
-                    border: '1.5px solid #000000', 
-                    borderTop: 'none',
-                    fontSize: '0.7rem',
-                    textAlign: 'left'
-                  }}>
-                    {/* Left Column: Amount in Words */}
-                    <div style={{ 
-                      padding: '8px', 
-                      borderRight: '1.5px solid #000000', 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      justifyContent: 'flex-start',
-                      minHeight: '170px'
+                    {/* GST RCM Status Bar */}
+                    <div style={{
+                      border: '1.5px solid #000000',
+                      borderTop: 'none',
+                      padding: '5px 8px',
+                      fontSize: '0.72rem',
+                      fontWeight: '800',
+                      textAlign: 'left',
+                      backgroundColor: '#FFFFFF',
+                      lineHeight: 1.3
                     }}>
-                      <div style={{ marginBottom: '4px' }}>
-                        <span style={{ fontWeight: '700', fontSize: '0.72rem' }}>Amount Chargeable (in words):</span>
-                        <span style={{ float: 'right', fontStyle: 'italic', fontWeight: 'bold', fontSize: '0.62rem' }}>E. & O.E</span>
-                      </div>
-                      <strong style={{ fontSize: '0.78rem', textTransform: 'uppercase', lineHeight: '1.3' }}>
-                        {amountInWords}
-                      </strong>
+                      <span>Whether GST is payable on Reverse Charge basis (RCM): <strong>{
+                        formData.gstCategory === 'rcm'
+                          ? 'GST charge applicable for RCM'
+                          : (formData.gstCategory === 'exempted' ? 'Exempted' : 'No')
+                      }</strong></span>
                     </div>
 
-                    {/* Right Column: Bank details (top) & Signatory (bottom) */}
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      {/* Bank Details */}
-                      <div style={{ padding: '8px', flexGrow: 1, lineHeight: '1.4' }}>
-                        <div style={{ fontWeight: '700', textDecoration: 'underline', marginBottom: '4px' }}>Company's Bank Details:</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr' }}>
-                          <span>A/c Holder's Name</span>
-                          <strong>: {formData.bankHolderName}</strong>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr' }}>
-                          <span>Bank Name</span>
-                          <strong>: {formData.bankName}</strong>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr' }}>
-                          <span>A/c No.</span>
-                          <strong>: {formData.bankAccount}</strong>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr' }}>
-                          <span>Branch & IFS Code</span>
-                          <strong>: {formData.bankBranch}</strong>
-                        </div>
-                      </div>
-
-                      {/* Signatory Block */}
-                      <div style={{ 
-                        borderTop: '1.5px solid #000000', 
-                        padding: '8px', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        justifyContent: 'space-between',
-                        minHeight: '90px'
+                    {/* Bottom Section: Words block on left, Bank + Signatory on right */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '53% 47%',
+                      border: '1.5px solid #000000',
+                      borderTop: 'none',
+                      fontSize: '0.7rem',
+                      textAlign: 'left'
+                    }}>
+                      {/* Left Column: Amount in Words */}
+                      <div style={{
+                        padding: '8px',
+                        borderRight: '1.5px solid #000000',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-start',
+                        minHeight: '170px'
                       }}>
-                        <div style={{ fontWeight: '700', textAlign: 'center', textTransform: 'uppercase' }}>
-                          for {formData.companyName}
+                        <div style={{ marginBottom: '4px' }}>
+                          <span style={{ fontWeight: '700', fontSize: '0.72rem' }}>Amount Chargeable (in words):</span>
+                          <span style={{ float: 'right', fontStyle: 'italic', fontWeight: 'bold', fontSize: '0.62rem' }}>E. & O.E</span>
                         </div>
-                        <div style={{ textAlign: 'right', marginTop: 'auto' }}>
-                          <strong style={{ display: 'block', fontSize: '0.72rem', textAlign: 'right' }}>({formData.signatoryName})</strong>
-                          <span style={{ fontSize: '0.62rem', fontWeight: 'bold', display: 'block', color: '#444', textAlign: 'right', marginTop: '2px' }}>Authorised Signatory</span>
+                        <strong style={{ fontSize: '0.78rem', textTransform: 'uppercase', lineHeight: '1.3' }}>
+                          {amountInWords}
+                        </strong>
+                      </div>
+
+                      {/* Right Column: Bank details (top) & Signatory (bottom) */}
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        {/* Bank Details */}
+                        <div style={{ padding: '8px', flexGrow: 1, lineHeight: '1.4' }}>
+                          <div style={{ fontWeight: '700', textDecoration: 'underline', marginBottom: '4px' }}>Company's Bank Details:</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr' }}>
+                            <span>A/c Holder's Name</span>
+                            <strong>: {formData.bankHolderName}</strong>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr' }}>
+                            <span>Bank Name</span>
+                            <strong>: {formData.bankName}</strong>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr' }}>
+                            <span>A/c No.</span>
+                            <strong>: {formData.bankAccount}</strong>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr' }}>
+                            <span>Branch & IFS Code</span>
+                            <strong>: {formData.bankBranch}</strong>
+                          </div>
+                        </div>
+
+                        {/* Signatory Block */}
+                        <div style={{
+                          borderTop: '1.5px solid #000000',
+                          padding: '8px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          minHeight: '90px'
+                        }}>
+                          <div style={{ fontWeight: '700', textAlign: 'center', textTransform: 'uppercase' }}>
+                            for {formData.companyName}
+                          </div>
+                          <div style={{ textAlign: 'right', marginTop: 'auto' }}>
+                            <strong style={{ display: 'block', fontSize: '0.72rem', textAlign: 'right' }}>({formData.signatoryName})</strong>
+                            <span style={{ fontSize: '0.62rem', fontWeight: 'bold', display: 'block', color: '#444', textAlign: 'right', marginTop: '2px' }}>Authorised Signatory</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="bill-disclaimer" style={{ textAlign: 'center', fontSize: '0.62rem', marginTop: '4px', fontStyle: 'italic' }}>
-                    This is a Computer Generated Document
+                    <div className="bill-disclaimer" style={{ textAlign: 'center', fontSize: '0.62rem', marginTop: '4px', fontStyle: 'italic' }}>
+                      This is a Computer Generated Document
+                    </div>
                   </div>
                 </div>
-              </div>
               </div>
             </div>
           </div>
@@ -1671,7 +1662,7 @@ export default function Dashboard({ onLogout }) {
 
             {/* History Sub-tabs */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
-              <button 
+              <button
                 onClick={() => setHistorySubTab('dn')}
                 style={{
                   padding: '8px 16px',
@@ -1686,7 +1677,7 @@ export default function Dashboard({ onLogout }) {
               >
                 Debit Notes (DN)
               </button>
-              <button 
+              <button
                 onClick={() => setHistorySubTab('lr')}
                 style={{
                   padding: '8px 16px',
@@ -1701,7 +1692,7 @@ export default function Dashboard({ onLogout }) {
               >
                 Lorry Receipts (LR)
               </button>
-              <button 
+              <button
                 onClick={() => setHistorySubTab('quote')}
                 style={{
                   padding: '8px 16px',
@@ -1738,9 +1729,9 @@ export default function Dashboard({ onLogout }) {
                           <button className="btn-outline" onClick={() => handleLoadInvoice(inv)}>
                             Edit / View
                           </button>
-                          <button 
-                            className="btn-outline" 
-                            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                          <button
+                            className="btn-outline"
+                            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onClick={() => setDeleteConfirm({ show: true, type: 'dn', id: inv.id })}
                           >
                             <Trash2 size={14} />
@@ -1775,9 +1766,9 @@ export default function Dashboard({ onLogout }) {
                           }}>
                             Edit / View
                           </button>
-                          <button 
-                            className="btn-outline" 
-                            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                          <button
+                            className="btn-outline"
+                            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onClick={() => setDeleteConfirm({ show: true, type: 'lr', id: lr.id })}
                           >
                             <Trash2 size={14} />
@@ -1811,9 +1802,9 @@ export default function Dashboard({ onLogout }) {
                           }}>
                             Edit / View
                           </button>
-                          <button 
-                            className="btn-outline" 
-                            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                          <button
+                            className="btn-outline"
+                            style={{ borderColor: '#EF4444', color: '#EF4444', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onClick={() => setDeleteConfirm({ show: true, type: 'quote', id: quote.id })}
                           >
                             <Trash2 size={14} />
@@ -1832,36 +1823,36 @@ export default function Dashboard({ onLogout }) {
 
       {/* Mobile Bottom Navigation */}
       <div className="mobile-nav">
-        <button 
-          className={`mobile-nav-link ${activeTab === 'overview' ? 'active' : ''}`} 
+        <button
+          className={`mobile-nav-link ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => handleTabChange('overview')}
         >
           <LayoutDashboard className="mobile-nav-icon" />
           <span>Overview</span>
         </button>
-        <button 
-          className={`mobile-nav-link ${activeTab === 'creator' ? 'active' : ''}`} 
+        <button
+          className={`mobile-nav-link ${activeTab === 'creator' ? 'active' : ''}`}
           onClick={() => handleTabChange('creator')}
         >
           <Plus className="mobile-nav-icon" />
           <span>Create</span>
         </button>
-        <button 
-          className={`mobile-nav-link ${activeTab === 'lr' ? 'active' : ''}`} 
+        <button
+          className={`mobile-nav-link ${activeTab === 'lr' ? 'active' : ''}`}
           onClick={() => handleTabChange('lr')}
         >
           <Truck className="mobile-nav-icon" />
           <span>LR</span>
         </button>
-        <button 
-          className={`mobile-nav-link ${activeTab.startsWith('quotation') ? 'active' : ''}`} 
+        <button
+          className={`mobile-nav-link ${activeTab.startsWith('quotation') ? 'active' : ''}`}
           onClick={() => handleTabChange('quotation-export')}
         >
           <FileText className="mobile-nav-icon" />
           <span>Quote</span>
         </button>
-        <button 
-          className={`mobile-nav-link ${activeTab === 'history' ? 'active' : ''}`} 
+        <button
+          className={`mobile-nav-link ${activeTab === 'history' ? 'active' : ''}`}
           onClick={() => handleTabChange('history')}
         >
           <History className="mobile-nav-icon" />
@@ -1907,9 +1898,9 @@ export default function Dashboard({ onLogout }) {
             </p>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button className="btn-outline" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => setDeleteConfirm({ show: false, type: '', id: null })}>Cancel</button>
-              <button 
-                className="btn-primary" 
-                style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#EF4444', borderColor: '#EF4444', color: '#fff' }} 
+              <button
+                className="btn-primary"
+                style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#EF4444', borderColor: '#EF4444', color: '#fff' }}
                 onClick={confirmDelete}
               >
                 Delete
