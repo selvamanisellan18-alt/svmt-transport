@@ -3,7 +3,6 @@ import { LayoutDashboard, FileText, History, LogOut, Plus, Trash2, Printer, Save
 import LrCreator from './LrCreator';
 import Quotation from './Quotation';
 
-// Custom SVG Logo for SVAT matching the red crescent-shaped truck logo with TM trademark
 const SVATLogo = () => (
   <div style={{
     display: 'flex',
